@@ -5,6 +5,7 @@
  */
 import type { CatalogEntry } from '../assets/AssetCatalog.ts';
 import type { AvatarReport } from '../assets/AvatarContract.ts';
+import type { NamingResult } from '../assets/BoneNaming.ts';
 
 export interface UICallbacks {
   onPlay: (entry: CatalogEntry) => void;
@@ -94,8 +95,12 @@ export class UIController {
    * Referto del contratto dell'asset: serve a chi sostituisce il modello 3D per
    * vedere subito cosa il motore ha riconosciuto e cosa manca.
    */
-  renderDiagnostics(report: AvatarReport): void {
+  renderDiagnostics(report: AvatarReport, naming: NamingResult): void {
     const rows: [string, string[]][] = [
+      ['Bone rinominati da una convenzione esterna', naming.renamed.size > 0
+        ? [`${naming.renamed.size} (es. ${[...naming.renamed].slice(0, 3).map(([a, b]) => `${a} → ${b}`).join(', ')})`]
+        : []],
+      ['Bone non riconosciuti, non animati', naming.unrecognized],
       ['Clip riconosciute', report.availableClips],
       ['Clip del catalogo non presenti nel modello', report.missingClips],
       ['Clip nel modello ignote al catalogo', report.unknownClips],

@@ -150,5 +150,49 @@ Non serve che siano nel modello: sono aggiunti a runtime sopra qualunque clip.
   di riposo, pulita e con le normali coerenti.
 - **Solo la testa**: si innesta sul corpo attuale, purché condivida le
   proporzioni del collo.
-- **Nomi diversi dai nostri**: si aggiunge una tabella di rimappatura al
-  caricamento, è una modifica di poche righe. Meglio comunque evitarla.
+- **Nomi diversi dai nostri**: già gestiti, vedi sotto.
+
+
+## 8. Rig di terze parti: rimappatura automatica dei nomi
+
+Un modello non deve per forza usare i nostri nomi. Al caricamento
+`src/assets/BoneNaming.ts` riconduce i nomi noti a quelli canonici e riscrive di
+conseguenza le track delle clip già presenti nel file, così le animazioni di
+origine continuano a funzionare insieme alle nostre.
+
+Convenzioni riconosciute:
+
+| Convenzione | Esempio | Diventa |
+| --- | --- | --- |
+| Mixamo | `mixamorig:LeftForeArm` | `LowerArm_L` |
+| Mixamo | `mixamorig:LeftUpLeg` | `UpperLeg_L` |
+| Mixamo | `mixamorig:RightHandIndex1` | `Index1_R` |
+| Rigify / Blender | `upper_arm.L`, `DEF-upper_arm.L` | `UpperArm_L` |
+| Rigify / Blender | `spine.001` | `Chest` |
+| Pacchetti CC0 | `Left_Hand`, `L_Hand`, `arm_r` | `Hand_L`, `Hand_L`, `UpperArm_R` |
+
+Due avvertenze di merito, non di forma:
+
+- `Arm` per Mixamo è il **braccio** e `ForeArm` l'avambraccio; `UpLeg` è la
+  **coscia** e `Leg` la gamba. La tabella lo tiene conto: sono gli scambi che
+  rovinano più spesso una rimappatura fatta a mano.
+- Il nostro rig ha **due falangi per dito**, Mixamo ne ha tre: la terza resta
+  non mappata e semplicemente non viene animata.
+
+Quando più bone finirebbero sullo stesso nome canonico (`Spine1` e `Spine2` di
+Mixamo sono entrambi candidati a `Chest`) vince il primo nella gerarchia; gli
+altri restano com'erano.
+
+I nomi non riconosciuti non sono un errore: restano invariati e compaiono nel
+pannello di diagnostica, dove si vede subito cosa il motore guiderà e cosa no.
+
+La rimappatura è verificata da `npm run check:naming`, che costruisce scheletri
+sintetici nelle varie convenzioni e controlla nomi e track.
+
+### Nota sulle licenze
+
+Il repository è MIT e il GLB è versionato al suo interno, quindi l'asset viene
+**ridistribuito**. Questo esclude le sorgenti i cui termini vietano la
+ridistribuzione dei file grezzi, Mixamo compreso: usarne i personaggi dentro un
+progetto è una cosa, pubblicarli in un repository è un'altra. Per materiale da
+committare servono licenze CC0 o CC-BY (con attribuzione in `README`).

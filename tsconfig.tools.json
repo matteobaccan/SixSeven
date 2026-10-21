@@ -1,9 +1,17 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "lib": ["ES2022"],
-    "types": ["node"],
+    "lib": [
+      "ES2022"
+    ],
+    "types": [
+      "node"
+    ],
     "tsBuildInfoFile": "./node_modules/.tmp/tools.tsbuildinfo"
   },
-  "include": ["tools"]
+  "include": [
+    "tools",
+    "src/assets/BoneNaming.ts"
+  ],
+  "_comment": "BoneNaming \u00e8 condiviso: il motore lo usa a runtime, i tool lo verificano."
 }

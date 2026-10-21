@@ -11,6 +11,7 @@ import { AvatarRenderer } from './avatar/AvatarRenderer.ts';
 import { IdleLife } from './avatar/IdleLife.ts';
 import { entriesOfKind, getEntry, IDLE_ID, plannedEntries } from './assets/AssetCatalog.ts';
 import { inspectAvatar } from './assets/AvatarContract.ts';
+import { applyBoneNaming } from './assets/BoneNaming.ts';
 import type { CatalogEntry } from './assets/AssetCatalog.ts';
 import { UIController } from './ui/UIController.ts';
 
@@ -41,6 +42,12 @@ async function boot(): Promise<void> {
     return;
   }
 
+  // Riconduce i nomi dei bone a quelli canonici: così un rig di terze parti
+  // (Mixamo, Rigify, pacchetti CC0) funziona senza modifiche al motore. Va
+  // fatto prima di costruire controller e strato procedurale, che cercano i
+  // bone per nome.
+  const naming = applyBoneNaming(avatar.root, avatar.clips);
+
   const animations = new AnimationController(avatar.root, avatar.clips);
   const life = new IdleLife(avatar.root);
   const idleClip = getEntry(IDLE_ID).clip;
@@ -48,7 +55,7 @@ async function boot(): Promise<void> {
   // Verifica del contratto: con un modello 3D sostituito dice subito cosa il
   // motore ha riconosciuto e cosa manca, senza dover leggere il codice.
   const report = inspectAvatar(avatar.root, animations.clipNames);
-  ui.renderDiagnostics(report);
+  ui.renderDiagnostics(report, naming);
   if (report.missingRequiredBones.length > 0) {
     console.warn('Bone richiesti mancanti nel modello:', report.missingRequiredBones.join(', '));
   }

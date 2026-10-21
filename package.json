@@ -8,8 +8,9 @@
     "dev": "vite",
     "build:avatar": "tsx tools/build-avatar.ts",
     "typecheck": "tsc --build --force",
-    "build": "npm run build:avatar && npm run typecheck && vite build",
-    "preview": "vite preview"
+    "build": "npm run build:avatar && npm run typecheck && npm run check:naming && vite build",
+    "preview": "vite preview",
+    "check:naming": "tsx tools/check-naming.ts"
   },
   "dependencies": {
     "three": "0.169.0"

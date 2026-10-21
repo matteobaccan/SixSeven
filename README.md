@@ -29,6 +29,7 @@ ancora usati.
 | `npm run dev` | server di sviluppo |
 | `npm run build:avatar` | costruisce mesh, scheletro e clip, scrive `public/assets/avatar.glb` |
 | `npm run typecheck` | controllo dei tipi (app e tool separati) |
+| `npm run check:naming` | verifica la rimappatura dei nomi dei bone |
 | `npm run build` | avatar + typecheck + bundle di produzione in `dist/` |
 | `npm run preview` | serve il bundle di produzione |
 
@@ -44,6 +45,7 @@ src/
   assets/
     AssetCatalog.ts       ID della specifica → clip del modello + metadati
     AvatarContract.ts     nomi attesi di bone e clip, con verifica del modello
+    BoneNaming.ts         rimappatura dei nomi da rig di terze parti
   ui/UIController.ts      permessi, comandi, stato, diagnostica
   main.ts                 collante dei moduli (la macchina a stati arriva in Fase 2)
 
@@ -64,7 +66,9 @@ docs/
 ## Sostituire il modello 3D
 
 Il modello è un asset, non codice: basta rimpiazzare `public/assets/avatar.glb`
-rispettando i nomi di bone e clip descritti in `docs/ASSET-CONTRACT.md`.
+rispettando i nomi di bone e clip descritti in `docs/ASSET-CONTRACT.md`. I rig di
+terze parti con nomi diversi (Mixamo, Rigify, pacchetti CC0) vengono ricondotti
+automaticamente ai nomi canonici.
 All'avvio l'applicazione confronta il modello con il contratto e mostra nel
 pannello cosa ha riconosciuto.
 
