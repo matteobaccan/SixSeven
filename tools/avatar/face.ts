@@ -24,7 +24,7 @@ export const FACE_IMAGE = { width: 540, height: 773 } as const;
  *
  * Il bordo inferiore cade dove passa la costina del girocollo, che lo copre.
  */
-export const FACE_CROP = { x0: 100, x1: 462, y0: 12, y1: 448 } as const;
+export const FACE_CROP = { x0: 100, x1: 462, y0: 12, y1: 436 } as const;
 
 /** Punti misurati sull'immagine. `_L` è la sinistra anatomica del personaggio. */
 export const FACE_LANDMARKS = {
@@ -40,11 +40,7 @@ export const FACE_LANDMARKS = {
 /** Metri per pixel: fissa la larghezza della testa a 0,60 m. */
 export const FACE_SCALE = 0.6 / (FACE_CROP.x1 - FACE_CROP.x0 - 24);
 
-/**
- * Altezza del mento nel mondo. Più è alta, più collo resta scoperto sopra il
- * maglione: è il parametro con cui si regola quanto il corpo sta in basso
- * rispetto alla testa.
- */
+/** Altezza, nel mondo, della riga 430 dell'immagine: la base della mascella. */
 export const CHIN_Y = 1.46;
 
 /** Profondità della superficie al centro e rientro ai bordi (dà volume). */
@@ -70,25 +66,21 @@ export function faceDepth(x: number): number {
 /**
  * Bordo laterale della superficie, misurato sull'immagine.
  *
- * Serve perché il personaggio indossi il solo maglione: nella caricatura le
- * punte del colletto della camicia risalgono lungo il collo fino all'altezza
- * della mascella, quindi nessun taglio orizzontale può escluderle. Sotto il
- * mento il bordo segue allora l'estensione dell'incarnato, rilevata riga per
- * riga sui pixel dell'asset; sopra, resta il ritaglio pieno e ci pensa il
- * canale alfa.
- *
- * Il contorno nero dipinto sul collo resta fuori insieme al colletto: non è un
- * problema, perché il filtro dei bordi disegna comunque una linea lungo la
- * sagoma.
+ * Sotto il mento segue l'estensione dell'incarnato: serve a lasciare fuori le
+ * punte del colletto della camicia, che nella caricatura risalgono lungo il
+ * collo fino all'altezza della mascella, quindi nessun taglio orizzontale le
+ * escluderebbe. L'ombra dipinta sul collo non è più un problema perché la
+ * texture viene uniformata in fase di build (vedi `face-texture.ts`).
  */
 const FACE_EDGE: readonly (readonly [number, number, number])[] = [
   [0, FACE_CROP.x0, FACE_CROP.x1],
-  [376, FACE_CROP.x0, FACE_CROP.x1],
-  [398, 179, 388],
-  [410, 182, 378],
-  [422, 181, 366],
-  [434, 181, 352],
-  [448, 183, 347],
+  [386, FACE_CROP.x0, FACE_CROP.x1],
+  [400, 180, 386],
+  [414, 181, 370],
+  [426, 182, 358],
+  // L'ultima riga sta sopra il contorno nero del collo: il taglio cade su
+  // incarnato pieno e il collo modellato lo prolunga senza una linea in mezzo.
+  [436, 180, 346],
 ];
 
 /** Estensione orizzontale della superficie a una data riga dell'immagine. */

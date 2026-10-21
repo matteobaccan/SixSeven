@@ -30,12 +30,14 @@ export function tube(
   rB: number,
   radialSeg = 16,
   heightSeg = 8,
+  /** Senza tappi: utile quando un'estremità resta dentro a un altro volume. */
+  openEnded = false,
 ): THREE.BufferGeometry {
   const va = new THREE.Vector3(a[0], a[1], a[2]);
   const vb = new THREE.Vector3(b[0], b[1], b[2]);
   const dir = new THREE.Vector3().subVectors(vb, va);
   const len = dir.length();
-  const g = new THREE.CylinderGeometry(rB, rA, len, radialSeg, heightSeg, false);
+  const g = new THREE.CylinderGeometry(rB, rA, len, radialSeg, heightSeg, openEnded);
   g.translate(0, len / 2, 0);
   const q = new THREE.Quaternion().setFromUnitVectors(
     new THREE.Vector3(0, 1, 0),

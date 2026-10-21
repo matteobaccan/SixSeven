@@ -145,10 +145,11 @@ function faceCard(): Part {
 function head(): Part[] {
   return [
     faceCard(),
-    // Collo: riempie lo spazio dietro al viso all'altezza dello scollo, così
-    // non si vede l'interno del maglione quando la testa ruota.
+    // Collo: prolunga verso il basso quello dipinto. Il raggio raccorda la
+    // larghezza del bordo inferiore del viso e la profondità lo tiene appena
+    // dietro, troppo poco perché il filtro dei bordi ci veda uno stacco.
     {
-      geometry: tube([0, 1.29, 0], [0, 1.47, 0], 0.094, 0.082, 18, 6),
+      geometry: tube([0, 1.24, -0.058], [0, 1.452, -0.058], 0.13, 0.148, 24, 8),
       material: 'skin',
       bones: BONE_GROUPS.head,
       power: 2.5,
@@ -178,12 +179,12 @@ function torso(): Part[] {
     [0.246, 1.14],
     [0.251, 1.196],
     [0.2515, 1.232],
-    [0.2465, 1.282],
-    [0.2345, 1.322],
-    [0.2145, 1.356],
-    [0.187, 1.384],
-    [0.152, 1.409],
-    [0.132, 1.428],
+    [0.2465, 1.268],
+    [0.2345, 1.298],
+    [0.2185, 1.33],
+    [0.196, 1.366],
+    [0.172, 1.398],
+    [0.152, 1.427],
   ];
   const body = new THREE.LatheGeometry(
     profile.map(([r, y]) => new THREE.Vector2(r, y)),
@@ -198,12 +199,13 @@ function torso(): Part[] {
   hem.scale(1, 1, 0.74);
   parts.push({ geometry: hem, material: 'sweaterRib', bones: BONE_GROUPS.torso, power: 4 });
 
-  // Costina del girocollo: passa esattamente sul bordo inferiore della
-  // superficie del viso e lo nasconde, al posto di un colletto modellato.
-  const neckRib = new THREE.TorusGeometry(0.132, 0.024, 8, 30);
+  // Costina del girocollo: passa sul bordo inferiore della superficie del viso
+  // e lo nasconde. La sua altezza è lo stacco fra testa e corpo — più è bassa,
+  // più collo dipinto resta scoperto, fin dove la caricatura ne ha.
+  const neckRib = new THREE.TorusGeometry(0.152, 0.024, 8, 30);
   neckRib.rotateX(Math.PI / 2);
   neckRib.scale(1, 1, 0.74);
-  neckRib.translate(0, 1.428, 0);
+  neckRib.translate(0, 1.427, 0);
   parts.push({ geometry: neckRib, material: 'sweaterRib', bones: BONE_GROUPS.collar, power: 4 });
 
   return parts;
@@ -229,8 +231,9 @@ function arms(): Part[] {
     const elbow = boneHead(`LowerArm_${side}`);
     const wrist = boneHead(`Hand_${side}`);
 
-    // La manica parte qualche centimetro *dentro* al busto: altrimenti la
-    // calotta piatta del tubo sporge dal maglione come una spallina.
+    // La manica parte dentro al busto ed è aperta in cima: la calotta piatta
+    // del tubo, con le spalle strette, sporgeva dal maglione come una
+    // spallina squadrata.
     const dir: Vec3 = [
       (elbow[0] - shoulder[0]) / 0.278,
       (elbow[1] - shoulder[1]) / 0.278,
@@ -242,9 +245,24 @@ function arms(): Part[] {
       shoulder[2] - dir[2] * 0.075,
     ];
 
+    // Calotta della spalla: copre il punto in cui la manica esce dal busto. La
+    // manica è più grossa del raggio del maglione a quell'altezza, quindi il
+    // suo bordo sporgerebbe come una spallina squadrata. Legata al braccio,
+    // così lo accompagna quando si alza.
+    parts.push({
+      geometry: ellipsoid(
+        [shoulder[0] - dir[0] * 0.02, shoulder[1] - dir[1] * 0.02, 0],
+        [0.118, 0.112, 0.108],
+        [20, 14],
+      ),
+      material: 'sweater',
+      bones: group,
+      power: 3,
+    });
+
     // Maniche del maglione: molti segmenti in altezza per una piega pulita al gomito.
     parts.push({
-      geometry: tube(sleeveTop, elbow, 0.112, 0.096, 18, 12),
+      geometry: tube(sleeveTop, elbow, 0.112, 0.096, 18, 12, true),
       material: 'sweater',
       bones: group,
       power: 2.5,

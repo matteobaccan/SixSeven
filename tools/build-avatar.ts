@@ -24,6 +24,11 @@ import { PALETTE, type PaletteKey } from './avatar/palette.ts';
 import { buildParts } from './avatar/mesh.ts';
 import { buildRig, skinPart } from './avatar/skin.ts';
 import { buildClips } from './avatar/clips.ts';
+import { buildFaceTexture } from './avatar/face-texture.ts';
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+const FACE_SOURCE = resolve(HERE, 'avatar', 'face-source.png');
+const FACE_OUTPUT = resolve(HERE, '..', 'public', 'assets', 'face.png');
 
 const OUTPUT = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -89,6 +94,11 @@ function buildAvatar(): { mesh: THREE.SkinnedMesh; clips: THREE.AnimationClip[];
 }
 
 async function main(): Promise<void> {
+  // La texture del viso si ricava dall'originale a ogni build: vedi
+  // face-texture.ts per il motivo.
+  const face = buildFaceTexture(FACE_SOURCE, FACE_OUTPUT);
+  console.log(`face.png    ${face.width}x${face.height}, ${face.changed} pixel uniformati sul collo`);
+
   const { mesh, clips, vertices } = buildAvatar();
 
   const root = new THREE.Group();

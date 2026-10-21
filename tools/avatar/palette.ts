@@ -12,7 +12,9 @@
 export const PALETTE = {
   /** Il viso è una texture: il materiale resta bianco e non tinge il disegno. */
   face: 0xffffff,
-  skin: 0xf8a878,
+  // Stesso valore dell'incarnato in luce della texture: il collo modellato
+  // prolunga quello dipinto senza che si veda la giunzione.
+  skin: 0xfdab7b,
   sweater: 0x405838,
   sweaterRib: 0x304038,
   trousers: 0x3a4150,

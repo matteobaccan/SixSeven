@@ -226,6 +226,13 @@ Come funziona:
   colletto della camicia risalgono lungo il collo fino all'altezza della
   mascella, quindi nessun taglio orizzontale le esclude. Il bordo inferiore
   cade dove passa la costina del girocollo, che lo copre;
+- la texture non è l'originale ma una sua elaborazione, prodotta a ogni build da
+  `face-texture.ts`: nel collo l'incarnato viene uniformato. Nella caricatura
+  quel collo è in ombra, perché sotto c'è il colletto che la giustifica;
+  togliendo il colletto l'ombra resta sospesa e legge come un angolo scuro. Non
+  esiste un taglio della superficie che la eviti — l'ombra c'è su ogni riga del
+  collo — quindi si interviene sui pixel. L'originale resta in
+  `tools/avatar/face-source.png` e non viene toccato;
 - `CHIN_Y` regola quanto il corpo sta in basso rispetto alla testa: è
   l'altezza del mento nel mondo, e la differenza con l'apertura del maglione è
   il collo che resta scoperto;

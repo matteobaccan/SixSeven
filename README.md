@@ -82,6 +82,7 @@ MIT — vedi `LICENSE`.
 
 ## Crediti
 
-Il viso dell'avatar (`public/assets/face.png`) e la palette provengono dalla
-caricatura del progetto [Ritardometro](https://github.com/matteobaccan/Ritardometro)
-dello stesso autore, anch'esso MIT.
+Il viso dell'avatar e la palette provengono dalla caricatura del progetto
+[Ritardometro](https://github.com/matteobaccan/Ritardometro) dello stesso
+autore, anch'esso MIT. L'originale è `tools/avatar/face-source.png`;
+`public/assets/face.png` ne è l'elaborazione prodotta dalla build.
