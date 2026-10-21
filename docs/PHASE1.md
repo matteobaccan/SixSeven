@@ -50,11 +50,14 @@ versionabile e diffabile come codice, riproducibile senza dipendenze esterne, e
 modificabile per parametri (un solo numero cambia la proporzione della testa).
 Non è un vincolo: il GLB è un asset sostituibile, vedi `ASSET-CONTRACT.md`.
 
-**2. Solo maglione, niente camicia.** Il colletto modellato in 3D non reggeva
-il confronto con il disegno, e quello *dipinto* nella texture non si può
-escludere con un taglio orizzontale perché le punte risalgono fino alla
-mascella. Il bordo della superficie del viso segue quindi l'incarnato misurato
-riga per riga, e la costina del girocollo copre il taglio.
+**2. Testa staccata dal corpo, senza collo.** Tre difetti insistevano sullo
+stesso punto: il colletto della camicia dipinto nella caricatura, l'ombra
+dipinta sul collo, e la giunzione fra disegno e geometria che a tre quarti si
+scopriva. Tagliare la testa al mento e lasciare dell'aria fra testa e maglione
+— il trucco del burattino — li elimina tutti e tre insieme, invece di
+tamponarli uno per uno come stavamo facendo. Il bordo inferiore è un arco, così
+legge come il mento e non come una sezione; il maglione si chiude in cima
+perché senza collo l'apertura lascerebbe vedere lo sfondo.
 
 **2b. Viso disegnato, corpo modellato.** Il volto è la caricatura originale
 applicata come texture a una superficie curva; il corpo è 3D riggato. Il primo

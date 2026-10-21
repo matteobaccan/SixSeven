@@ -24,7 +24,7 @@ export const FACE_IMAGE = { width: 540, height: 773 } as const;
  *
  * Il bordo inferiore cade dove passa la costina del girocollo, che lo copre.
  */
-export const FACE_CROP = { x0: 100, x1: 462, y0: 12, y1: 436 } as const;
+export const FACE_CROP = { x0: 100, x1: 462, y0: 12, y1: 418 } as const;
 
 /** Punti misurati sull'immagine. `_L` è la sinistra anatomica del personaggio. */
 export const FACE_LANDMARKS = {
@@ -66,21 +66,20 @@ export function faceDepth(x: number): number {
 /**
  * Bordo laterale della superficie, misurato sull'immagine.
  *
- * Sotto il mento segue l'estensione dell'incarnato: serve a lasciare fuori le
- * punte del colletto della camicia, che nella caricatura risalgono lungo il
- * collo fino all'altezza della mascella, quindi nessun taglio orizzontale le
- * escluderebbe. L'ombra dipinta sul collo non è più un problema perché la
- * texture viene uniformata in fase di build (vedi `face-texture.ts`).
+ * La testa finisce al mento: niente collo. È il trucco del burattino — testa
+ * sospesa sopra il corpo, con un po' d'aria in mezzo — e risolve in un colpo
+ * solo il colletto della camicia, l'ombra dipinta sul collo e la giunzione fra
+ * disegno e geometria, che erano tre problemi distinti dello stesso punto.
+ *
+ * Il bordo inferiore cade appena sotto la piega del mento: il filtro dei bordi
+ * gli disegna attorno il suo contorno, quindi il taglio legge come la base
+ * della testa e non come una sezione.
  */
 const FACE_EDGE: readonly (readonly [number, number, number])[] = [
   [0, FACE_CROP.x0, FACE_CROP.x1],
   [386, FACE_CROP.x0, FACE_CROP.x1],
   [400, 180, 386],
-  [414, 181, 370],
-  [426, 182, 358],
-  // L'ultima riga sta sopra il contorno nero del collo: il taglio cade su
-  // incarnato pieno e il collo modellato lo prolunga senza una linea in mezzo.
-  [436, 180, 346],
+  [418, 181, 368],
 ];
 
 /** Estensione orizzontale della superficie a una data riga dell'immagine. */
@@ -91,4 +90,19 @@ export function faceSpanAt(imgY: number): { x0: number; x1: number } {
   const [yb, bx0, bx1] = FACE_EDGE[i + 1];
   const t = yb === ya ? 1 : Math.min(1, Math.max(0, (imgY - ya) / (yb - ya)));
   return { x0: ax0 + (bx0 - ax0) * t, x1: ax1 + (bx1 - ax1) * t };
+}
+
+/**
+ * Bordo inferiore della testa: arco, non taglio dritto.
+ *
+ * Con la testa staccata dal corpo il bordo inferiore diventa una linea di
+ * contorno vera e propria, e dritta leggerebbe come una sezione. Curvo — più
+ * basso al centro, risalito ai lati — legge come il mento.
+ */
+const CHIN_EDGE = { centre: FACE_CROP.y1, side: 394 } as const;
+
+/** Riga dell'immagine su cui finisce la superficie, a una data ascissa relativa. */
+export function chinBottomAt(u: number): number {
+  const t = Math.abs(2 * u - 1);
+  return CHIN_EDGE.centre - (CHIN_EDGE.centre - CHIN_EDGE.side) * Math.pow(t, 1.6);
 }

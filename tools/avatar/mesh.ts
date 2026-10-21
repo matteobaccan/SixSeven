@@ -13,7 +13,14 @@
 import * as THREE from 'three';
 import { PALETTE, type PaletteKey } from './palette.ts';
 import { BONE_GROUPS, FINGER_IDS, RIG } from './rig.ts';
-import { FACE_CROP, FACE_IMAGE, FACE_LANDMARKS, faceSpanAt, faceToWorld } from './face.ts';
+import {
+  chinBottomAt,
+  FACE_CROP,
+  FACE_IMAGE,
+  FACE_LANDMARKS,
+  faceSpanAt,
+  faceToWorld,
+} from './face.ts';
 import { deg, ellipsoid, tube, type Vec3 } from './geometry.ts';
 
 export interface Part {
@@ -85,15 +92,18 @@ function faceCard(): Part {
 
   for (let row = 0; row <= FACE_ROWS; row++) {
     const v = row / FACE_ROWS;
-    const imgY = FACE_CROP.y0 + (FACE_CROP.y1 - FACE_CROP.y0) * v;
+    const rowY = FACE_CROP.y0 + (FACE_CROP.y1 - FACE_CROP.y0) * v;
 
-    // Sotto il mento la griglia si restringe al collo: lascia fuori le punte
-    // del colletto disegnato senza intaccare il viso.
-    const span = faceSpanAt(imgY);
+    // Verso il basso la griglia si restringe seguendo l'incarnato: lascia
+    // fuori le punte del colletto disegnato senza intaccare il viso.
+    const span = faceSpanAt(rowY);
 
     for (let col = 0; col <= FACE_COLS; col++) {
       const u = col / FACE_COLS;
       const imgX = span.x0 + (span.x1 - span.x0) * u;
+      // Il bordo inferiore è un arco: le ultime righe si appoggiano su di esso
+      // invece di tagliare dritto.
+      const imgY = Math.min(rowY, chinBottomAt(u));
 
       const [x, y, z] = faceToWorld({ x: imgX, y: imgY });
       positions.push(x, y, z);
@@ -143,18 +153,7 @@ function faceCard(): Part {
 }
 
 function head(): Part[] {
-  return [
-    faceCard(),
-    // Collo: prolunga verso il basso quello dipinto. Il raggio raccorda la
-    // larghezza del bordo inferiore del viso e la profondità lo tiene appena
-    // dietro, troppo poco perché il filtro dei bordi ci veda uno stacco.
-    {
-      geometry: tube([0, 1.24, -0.058], [0, 1.452, -0.058], 0.13, 0.148, 24, 8),
-      material: 'skin',
-      bones: BONE_GROUPS.head,
-      power: 2.5,
-    },
-  ];
+  return [faceCard()];
 }
 
 // ---------------------------------------------------------------------------
@@ -181,10 +180,15 @@ function torso(): Part[] {
     [0.2515, 1.232],
     [0.2465, 1.268],
     [0.2345, 1.298],
-    [0.2185, 1.33],
-    [0.196, 1.366],
-    [0.172, 1.398],
-    [0.152, 1.427],
+    [0.2185, 1.318],
+    [0.196, 1.348],
+    [0.172, 1.376],
+    [0.152, 1.405],
+    // Chiusura in cima: senza il collo a tapparla, l'apertura lascerebbe
+    // vedere lo sfondo attraverso il petto.
+    [0.112, 1.395],
+    [0.06, 1.386],
+    [0.001, 1.381],
   ];
   const body = new THREE.LatheGeometry(
     profile.map(([r, y]) => new THREE.Vector2(r, y)),
@@ -205,7 +209,7 @@ function torso(): Part[] {
   const neckRib = new THREE.TorusGeometry(0.152, 0.024, 8, 30);
   neckRib.rotateX(Math.PI / 2);
   neckRib.scale(1, 1, 0.74);
-  neckRib.translate(0, 1.427, 0);
+  neckRib.translate(0, 1.405, 0);
   parts.push({ geometry: neckRib, material: 'sweaterRib', bones: BONE_GROUPS.collar, power: 4 });
 
   return parts;

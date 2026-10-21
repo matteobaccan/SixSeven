@@ -220,22 +220,23 @@ Come funziona:
   mondo. Se la texture cambia, si rimisurano quei punti e il resto segue.
 - la superficie è ritagliata dal canale alfa della texture, quindi la sagoma è
   quella disegnata: non serve modellare un contorno;
-- sotto il mento il bordo laterale segue l'estensione dell'incarnato, misurata
-  riga per riga sull'asset (`FACE_EDGE` in `face.ts`). Serve perché il
-  personaggio indossi il **solo maglione**: nella caricatura le punte del
-  colletto della camicia risalgono lungo il collo fino all'altezza della
-  mascella, quindi nessun taglio orizzontale le esclude. Il bordo inferiore
-  cade dove passa la costina del girocollo, che lo copre;
-- la texture non è l'originale ma una sua elaborazione, prodotta a ogni build da
-  `face-texture.ts`: nel collo l'incarnato viene uniformato. Nella caricatura
-  quel collo è in ombra, perché sotto c'è il colletto che la giustifica;
-  togliendo il colletto l'ombra resta sospesa e legge come un angolo scuro. Non
-  esiste un taglio della superficie che la eviti — l'ombra c'è su ogni riga del
-  collo — quindi si interviene sui pixel. L'originale resta in
-  `tools/avatar/face-source.png` e non viene toccato;
-- `CHIN_Y` regola quanto il corpo sta in basso rispetto alla testa: è
-  l'altezza del mento nel mondo, e la differenza con l'apertura del maglione è
-  il collo che resta scoperto;
+- **la testa finisce al mento: niente collo, e un po' d'aria fra testa e
+  maglione.** È il trucco del burattino, e risolve in un colpo solo tre
+  problemi che insistevano tutti sullo stesso punto: il colletto della camicia
+  dipinto nella caricatura (le cui punte risalgono fino alla mascella, quindi
+  nessun taglio orizzontale le escludeva), l'ombra dipinta sul collo (presente
+  su ogni riga, quindi inevitabile spostando il taglio) e la giunzione fra
+  disegno e geometria, che a tre quarti si scopriva;
+- il bordo inferiore è un **arco** (`chinBottomAt`), non un taglio dritto: dritto
+  leggerebbe come una sezione, curvo legge come il mento. Il filtro dei bordi gli
+  disegna attorno il contorno, quindi è una linea di disegno a tutti gli
+  effetti;
+- il bordo laterale segue l'estensione dell'incarnato misurata riga per riga
+  sull'asset (`FACE_EDGE`);
+- il maglione è **chiuso in cima**: senza il collo a tapparla, l'apertura
+  lascerebbe vedere lo sfondo attraverso il petto;
+- `CHIN_Y` e l'altezza della costina del girocollo regolano insieme quanta aria
+  resta fra testa e corpo;
 - il materiale si chiama `face` nel GLB; a runtime `AvatarRenderer` gli applica
   la texture e lo rende **non illuminato**, perché luci e ombre sono già
   dipinte. Illuminarlo aggiungerebbe un secondo chiaroscuro.
@@ -260,6 +261,7 @@ apertura della bocca: servirebbe disegnarla.
 ### Limiti dichiarati
 
 - la testa regge rotazioni fino a circa 30°; oltre, la natura piatta si vede.
-  Per questo gioco va bene: l'avatar guarda il giocatore.
+  Per questo gioco va bene: l'avatar guarda il giocatore. Con la testa staccata
+  il margine è migliorato, perché non c'è più una giunzione da scoprire.
 - niente bocca spalancata, niente sguardo che si sposta davvero: per quelli
   servono più disegni, o un viso modellato in 3D.

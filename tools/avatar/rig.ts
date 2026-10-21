@@ -123,7 +123,10 @@ export const RIG: readonly BoneDef[] = [
   { name: 'Spine', parent: 'Hips', head: [0, 1.0, 0] },
   { name: 'Chest', parent: 'Spine', head: [0, 1.16, 0] },
   { name: 'Neck', parent: 'Chest', head: [0, 1.35, 0] },
-  { name: 'Head', parent: 'Neck', head: [0, 1.45, 0] },
+  // Con la testa staccata, l'articolazione sta nell'aria fra mento e maglione:
+  // i cenni del capo ruotano attorno a un collo che non c'è, ed è proprio
+  // quello che rende leggibile il trucco.
+  { name: 'Head', parent: 'Neck', head: [0, 1.47, 0] },
 
   // Controlli facciali. Le palpebre stanno 5 cm dietro al viso: con quel
   // braccio di leva una rotazione su X di 52° trascina la pelle verso il basso
