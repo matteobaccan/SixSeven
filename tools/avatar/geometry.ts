@@ -86,6 +86,21 @@ export function arc(
 }
 
 /**
+ * Calotta sferica: una porzione di sfera attorno a `center`. Serve per la
+ * palpebra, che deve scorrere sopra il bulbo restando concentrica a esso.
+ */
+export function cap(
+  center: Vec3,
+  radius: number,
+  coverage: number,
+  seg: [number, number] = [20, 12],
+): THREE.BufferGeometry {
+  const g = new THREE.SphereGeometry(radius, seg[0], seg[1], 0, Math.PI * 2, 0, coverage);
+  g.translate(center[0], center[1], center[2]);
+  return g;
+}
+
+/**
  * Tubo lungo una curva passante per i punti dati: serve per le linee disegnate
  * sul viso (rughe, pieghe), che devono seguire la superficie del cranio.
  */

@@ -34,10 +34,10 @@ export interface IdleLifeOptions {
 }
 
 const BLINK_DURATION = 0.16;
-const BLINK_CLOSED_ANGLE = 46;
+const BLINK_CLOSED_ANGLE = 52;
 
 export class IdleLife {
-  enabled = true;
+  private active = true;
 
   private readonly controlled: Controlled[] = [];
   private readonly byName = new Map<string, Controlled>();
@@ -74,14 +74,31 @@ export class IdleLife {
     });
   }
 
+  get enabled(): boolean {
+    return this.active;
+  }
+
+  /**
+   * Disattivandolo lo strato smette di governare i bone, che restano a
+   * disposizione di chi voglia posarli a mano (strumenti di authoring, test).
+   * Riattivandolo riparte dalla posa corrente, senza scatti.
+   */
+  set enabled(value: boolean) {
+    if (value && !this.active) {
+      for (const entry of this.controlled) entry.base.copy(entry.bone.quaternion);
+    }
+    this.active = value;
+  }
+
   /** Riporta i bone controllati al valore prodotto dalle clip. */
   beforeMixer(): void {
+    if (!this.active) return;
     for (const entry of this.controlled) entry.bone.quaternion.copy(entry.base);
   }
 
   afterMixer(dt: number): void {
+    if (!this.active || this.intensity <= 0) return;
     for (const entry of this.controlled) entry.base.copy(entry.bone.quaternion);
-    if (!this.enabled || this.intensity <= 0) return;
 
     this.time += dt;
     this.updateBlink(dt);

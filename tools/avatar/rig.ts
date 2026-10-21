@@ -33,6 +33,9 @@ const FINGERS = [
 export const HEAD_PIVOT_Y = 1.45;
 export const HEAD_SCALE = 1.33;
 
+/** Centro del bulbo oculare sinistro, prima dell'ingrandimento della testa. */
+export const EYE_L: readonly [number, number, number] = [0.0755, 1.6235, 0.1705];
+
 function headScaled(p: readonly [number, number, number]): [number, number, number] {
   return [
     p[0] * HEAD_SCALE,
@@ -134,15 +137,13 @@ export const RIG: readonly BoneDef[] = [
   { name: 'Jaw', parent: 'Head', head: headScaled([0, 1.565, 0.03]) },
   { name: 'Brow_L', parent: 'Head', head: headScaled([0.082, 1.672, 0.15]) },
   { name: 'Brow_R', parent: 'Head', head: headScaled([-0.082, 1.672, 0.15]) },
-  { name: 'Eye_L', parent: 'Head', head: headScaled([0.076, 1.628, 0.135]) },
-  { name: 'Eye_R', parent: 'Head', head: headScaled([-0.076, 1.628, 0.135]) },
-
-  // Palpebre: il perno sta dietro al bulbo, così una rotazione su X di circa
-  // 45° fa scendere la palpebra fino a coprire l'occhio. Senza un bone
-  // dedicato non si può chiudere l'occhio, e senza battito di palpebre il
-  // personaggio resta una statua.
-  { name: 'Lid_L', parent: 'Head', head: headScaled([0.076, 1.636, 0.108]) },
-  { name: 'Lid_R', parent: 'Head', head: headScaled([-0.076, 1.636, 0.108]) },
+  // Occhi e palpebre condividono il perno: è il centro del bulbo. Solo così la
+  // pupilla ruota restando sulla superficie e la palpebra le scorre sopra
+  // invece di affondare nella testa.
+  { name: 'Eye_L', parent: 'Head', head: headScaled(EYE_L) },
+  { name: 'Eye_R', parent: 'Head', head: headScaled([-EYE_L[0], EYE_L[1], EYE_L[2]]) },
+  { name: 'Lid_L', parent: 'Head', head: headScaled(EYE_L) },
+  { name: 'Lid_R', parent: 'Head', head: headScaled([-EYE_L[0], EYE_L[1], EYE_L[2]]) },
 
   ...LEFT_SIDE,
   ...LEFT_SIDE.map(mirror),

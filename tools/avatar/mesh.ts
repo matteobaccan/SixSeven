@@ -12,8 +12,8 @@
  */
 import * as THREE from 'three';
 import { PALETTE, type PaletteKey } from './palette.ts';
-import { BONE_GROUPS, FINGER_IDS, HEAD_PIVOT_Y, HEAD_SCALE, RIG } from './rig.ts';
-import { arc, boxAt, curve, deg, ellipsoid, shape, tube, type Vec3 } from './geometry.ts';
+import { BONE_GROUPS, EYE_L, FINGER_IDS, HEAD_PIVOT_Y, HEAD_SCALE, RIG } from './rig.ts';
+import { arc, boxAt, cap, curve, deg, ellipsoid, shape, tube, type Vec3 } from './geometry.ts';
 
 export interface Part {
   geometry: THREE.BufferGeometry;
@@ -187,32 +187,36 @@ function head(): Part[] {
     });
   }
 
-  // Occhi: sclera + pupilla legata al bone dell'occhio (sguardo orientabile).
+  // Occhio: bulbo sferico, pupilla appoggiata sulla sua superficie e palpebra
+  // come calotta concentrica. La concentricità è il punto: la palpebra ruota
+  // attorno al centro del bulbo e lo copre scorrendogli sopra.
+  const EYE_R_RADIUS = 0.0315;
   for (const [s, white, pupil, lid] of [
     [1, BONE_GROUPS.head, BONE_GROUPS.eyeL, BONE_GROUPS.lidL],
     [-1, BONE_GROUPS.head, BONE_GROUPS.eyeR, BONE_GROUPS.lidR],
   ] as const) {
+    const eye: Vec3 = [s * EYE_L[0], EYE_L[1], EYE_L[2]];
+
     parts.push({
-      geometry: ellipsoid([s * 0.075, 1.624, 0.168], [0.042, 0.029, 0.032], [18, 12]),
+      geometry: ellipsoid(eye, [EYE_R_RADIUS, EYE_R_RADIUS, EYE_R_RADIUS], [20, 14]),
       material: 'eyeWhite',
       bones: white,
       power: 8,
     });
     parts.push({
-      geometry: ellipsoid([s * 0.077, 1.622, 0.192], [0.0145, 0.0145, 0.013], [12, 8]),
+      geometry: ellipsoid(
+        [eye[0], eye[1] - 0.001, eye[2] + 0.0225],
+        [0.0145, 0.0145, 0.0105],
+        [14, 10],
+      ),
       material: 'pupil',
       bones: pupil,
       power: 8,
     });
-    // Palpebra superiore: copre il bordo alto della sclera e, legata al proprio
-    // bone, permette il battito di ciglia.
+    // Copertura di 64°: a riposo la palpebra lascia scoperto l'occhio dalla
+    // linea delle ciglia in giù; una rotazione su X di 52° lo chiude del tutto.
     parts.push({
-      geometry: ellipsoid(
-        [s * 0.074, 1.6455, 0.163],
-        [0.047, 0.028, 0.038],
-        [16, 10],
-        [0, 0, deg(s * 7)],
-      ),
+      geometry: cap(eye, EYE_R_RADIUS + 0.004, deg(64)),
       material: 'skin',
       bones: lid,
       power: 8,
@@ -350,14 +354,15 @@ function torso(): Part[] {
     [0.248, 0.88],
     [0.252, 0.97],
     [0.262, 1.06],
-    [0.274, 1.15],
-    [0.284, 1.218],
-    [0.284, 1.252],
-    [0.272, 1.282],
-    [0.248, 1.306],
-    [0.206, 1.328],
-    [0.158, 1.342],
-    [0.124, 1.35],
+    [0.272, 1.14],
+    [0.2805, 1.196],
+    [0.2838, 1.238],
+    [0.2805, 1.272],
+    [0.2655, 1.299],
+    [0.2415, 1.319],
+    [0.2055, 1.335],
+    [0.162, 1.3455],
+    [0.124, 1.352],
   ];
   const body = new THREE.LatheGeometry(
     profile.map(([r, y]) => new THREE.Vector2(r, y)),
