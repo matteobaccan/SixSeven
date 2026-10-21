@@ -135,7 +135,7 @@ export class ToonLinePass {
         tDepth: { value: depthTexture },
         uTexel: { value: new Vector2() },
         uWidth: { value: options.lineWidth ?? 1.15 },
-        uLineColor: { value: new Color(options.lineColor ?? 0x15120f) },
+        uLineColor: { value: new Color(options.lineColor ?? 0x0b0b0b) },
         uNormalBias: { value: options.normalBias ?? 0.42 },
         uDepthBias: { value: options.depthBias ?? 0.006 },
         uNear: { value: 0.1 },

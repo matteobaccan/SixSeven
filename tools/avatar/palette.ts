@@ -1,27 +1,31 @@
 /**
- * Palette ricavata dalla caricatura di riferimento (docs/reference-avatar.md).
+ * Palette campionata dall'asset originale della caricatura
+ * (`src/matteo_caricatura.png` del progetto Ritardometro, stesso autore, MIT):
+ * i valori sono i colori dominanti delle rispettive zone, non una stima a
+ * occhio, così i due progetti mostrano lo stesso personaggio.
  * I colori sono i base color del GLB: il renderer può applicare uno stile
  * diverso (toon, cel, outline) senza che il modello vada rigenerato.
  */
 export const PALETTE = {
-  skin: 0xf2a479,
-  skinDark: 0xe08c60,
-  ear: 0xeb9d72,
-  nose: 0xf0a176,
-  browHair: 0x4a3122,
-  ink: 0x3a2a20,
+  skin: 0xf8a878,
+  skinDark: 0xf09070,
+  ear: 0xf59878,
+  // La punta del naso nella caricatura è nettamente più rossa del resto.
+  nose: 0xf88868,
+  browHair: 0x503028,
   eyeWhite: 0xfbfaf6,
-  pupil: 0x241a14,
-  mouth: 0x8c4436,
+  pupil: 0x1a1412,
+  mouth: 0xe86058,
   teeth: 0xf7f4ee,
-  sweater: 0x40703a,
-  sweaterRib: 0x335a2d,
-  shirtWhite: 0xf0efea,
-  shirtBlue: 0x7b9bc6,
-  shirtPurple: 0x9185c2,
+  sweater: 0x405838,
+  sweaterRib: 0x304038,
+  shirtWhite: 0xf0f0f0,
+  shirtBlue: 0x608490,
+  shirtPurple: 0x60546c,
+  ink: 0x101010,
   trousers: 0x3a4150,
   shoes: 0x26282e,
-  outline: 0x141414,
+  outline: 0x0b0b0b,
 } as const;
 
 export type PaletteKey = keyof typeof PALETTE;
