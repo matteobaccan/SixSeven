@@ -37,11 +37,17 @@ function buildAvatar(): { mesh: THREE.SkinnedMesh; clips: THREE.AnimationClip[];
   const rig = buildRig();
   const parts = buildParts();
 
-  // Normalizza gli attributi: il merge richiede lo stesso set su ogni parte.
+  // Il merge richiede lo stesso set di attributi su ogni parte: le UV restano
+  // ovunque perché il viso è texturizzato.
   for (const part of parts) {
-    part.geometry.deleteAttribute('uv');
+    if (!part.geometry.getAttribute('uv')) {
+      const count = part.geometry.getAttribute('position').count;
+      part.geometry.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(count * 2), 2));
+    }
     part.geometry.computeVertexNormals();
-    skinPart(part, rig);
+    // Il viso porta pesi calcolati su zone di influenza disegnate, non su
+    // distanze dai bone: non vanno ricalcolati.
+    if (!part.preskinned) skinPart(part, rig);
   }
 
   // Un gruppo per materiale, così il GLB espone una primitive per colore.

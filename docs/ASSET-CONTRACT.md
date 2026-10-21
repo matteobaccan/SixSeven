@@ -4,6 +4,15 @@ Questo documento è quanto serve per realizzare un modello 3D sostitutivo senza
 toccare il motore di gioco. Il motore non conosce la pipeline che ha prodotto il
 file: conosce solo i nomi elencati qui.
 
+> **Il viso non è modellato.** L'avatar attuale è ibrido: corpo 3D riggato e
+> volto costituito dalla caricatura originale applicata come texture a una
+> superficie curva agganciata al bone `Head` (vedi §9). Una caricatura disegnata
+> non si riproduce accostando primitive 3D — il naso, gli occhi socchiusi e il
+> tratto sono scelte di disegno — mentre le mani hanno bisogno di essere vero 3D
+> per i gesti Six Seven. Chi realizza un modello completo può sostituire anche
+> il viso: in quel caso valgono i requisiti di §3 e basta non dichiarare il
+> materiale `face`.
+
 Il riferimento in codice è `src/assets/AvatarContract.ts`, che contiene gli
 stessi nomi e una funzione di verifica. All'avvio l'applicazione confronta il
 modello caricato con il contratto e mostra il referto nel pannello
@@ -196,3 +205,45 @@ Il repository è MIT e il GLB è versionato al suo interno, quindi l'asset viene
 ridistribuzione dei file grezzi, Mixamo compreso: usarne i personaggi dentro un
 progetto è una cosa, pubblicarli in un repository è un'altra. Per materiale da
 committare servono licenze CC0 o CC-BY (con attribuzione in `README`).
+
+
+## 9. Il viso come texture
+
+Il volto è `public/assets/face.png` — la caricatura originale del progetto
+[Ritardometro](https://github.com/matteobaccan/Ritardometro) (stesso autore,
+MIT) — applicata a una griglia curvata a parabola, agganciata al bone `Head`.
+
+Come funziona:
+
+- `tools/avatar/face.ts` contiene i riferimenti misurati sull'immagine (occhi,
+  sopracciglia, bocca, mento, ritaglio) e la conversione da pixel a coordinate
+  mondo. Se la texture cambia, si rimisurano quei punti e il resto segue.
+- la superficie è ritagliata dal canale alfa della texture, quindi la sagoma è
+  quella disegnata: non serve modellare un contorno;
+- il materiale si chiama `face` nel GLB; a runtime `AvatarRenderer` gli applica
+  la texture e lo rende **non illuminato**, perché luci e ombre sono già
+  dipinte. Illuminarlo aggiungerebbe un secondo chiaroscuro.
+- il filtro dei bordi tratta il viso come **solo profondità**: il disegno porta
+  già i propri contorni, e senza questo accorgimento i bordi del collo e del
+  colletto finirebbero stampati sopra la faccia.
+
+### Espressioni su un viso disegnato
+
+I pesi di skinning del viso non si calcolano per distanza dai bone come per il
+resto del corpo: lì le articolazioni sono volumi, qui sono tratti disegnati.
+Si usano **zone di influenza gaussiane** centrate sui punti misurati, come nel
+rig 2D del Ritardometro. Ruotando `Lid_L` la pelle dipinta scende sopra
+l'occhio: è così che il personaggio sbatte le palpebre pur essendo un disegno.
+
+I bone facciali stanno *dietro* alla superficie, e la distanza è il braccio di
+leva: 5 cm per le palpebre (una rotazione di 52° le chiude), 2,8 cm per la
+mandibola. La mandibola è il movimento più delicato — trascinare troppo allunga
+il mento invece di aprire le labbra — e per lo stesso motivo non c'è una vera
+apertura della bocca: servirebbe disegnarla.
+
+### Limiti dichiarati
+
+- la testa regge rotazioni fino a circa 30°; oltre, la natura piatta si vede.
+  Per questo gioco va bene: l'avatar guarda il giocatore.
+- niente bocca spalancata, niente sguardo che si sposta davvero: per quelli
+  servono più disegni, o un viso modellato in 3D.

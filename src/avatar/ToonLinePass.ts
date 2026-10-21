@@ -16,7 +16,9 @@
 import {
   Color,
   DepthTexture,
+  type Material,
   Mesh,
+  MeshDepthMaterial,
   MeshNormalMaterial,
   NoBlending,
   type Object3D,
@@ -25,6 +27,7 @@ import {
   PlaneGeometry,
   Scene,
   ShaderMaterial,
+  type Texture,
   UnsignedIntType,
   Vector2,
   WebGLRenderTarget,
@@ -111,8 +114,10 @@ export class ToonLinePass {
   private readonly quadScene = new Scene();
   private readonly quadCamera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
   private readonly material: ShaderMaterial;
-  /** Oggetti esclusi dalle linee: fondale e ombra di contatto. */
+  /** Oggetti esclusi del tutto dal calcolo: fondale e ombra di contatto. */
   private readonly excluded = new Set<Object3D>();
+  /** Oggetti che contribuiscono solo alla profondità (vedi `depthOnly`). */
+  private readonly depthOnlyMaterials = new Map<Object3D, MeshDepthMaterial>();
 
   constructor(
     private readonly renderer: WebGLRenderer,
@@ -151,6 +156,23 @@ export class ToonLinePass {
     this.excluded.add(object);
   }
 
+  /**
+   * L'oggetto contribuisce alla profondità ma non alle normali: riceve una
+   * linea lungo la propria sagoma e nessuna linea interna, e copre
+   * correttamente ciò che gli sta dietro.
+   *
+   * Serve per il viso, che è una texture con i contorni già disegnati: dandogli
+   * le normali comparirebbero linee dentro al disegno, e togliendolo del tutto
+   * i bordi del collo e del colletto finirebbero stampati sopra la faccia.
+   */
+  depthOnly(mesh: Mesh, map?: Texture, alphaTest = 0.5): void {
+    const material = new MeshDepthMaterial({ alphaTest, colorWrite: false });
+    if (map) material.map = map;
+    this.depthOnlyMaterials.set(mesh, material);
+    // Disegnato per primo: così scrive la profondità prima di ciò che copre.
+    mesh.renderOrder = -1;
+  }
+
   setSize(width: number, height: number, pixelRatio: number): void {
     const w = Math.max(1, Math.floor(width * pixelRatio));
     const h = Math.max(1, Math.floor(height * pixelRatio));
@@ -177,24 +199,34 @@ export class ToonLinePass {
     this.material.uniforms.uNear.value = camera.near;
     this.material.uniforms.uFar.value = camera.far;
 
-    // Passata normali+profondità: fondale e ombra non devono generare bordi.
+    // Passata normali+profondità. I materiali vengono scambiati oggetto per
+    // oggetto invece di usare `overrideMaterial`, perché il viso ha bisogno di
+    // un trattamento diverso dal resto.
     const hidden: Object3D[] = [];
-    for (const object of this.excluded) {
-      if (object.visible) {
-        object.visible = false;
-        hidden.push(object);
+    const restore: [Mesh, Material | Material[]][] = [];
+    scene.traverse((object) => {
+      if (this.excluded.has(object)) {
+        if (object.visible) {
+          object.visible = false;
+          hidden.push(object);
+        }
+        return;
       }
-    }
+      const mesh = object as Mesh;
+      if (!mesh.isMesh) return;
+      restore.push([mesh, mesh.material]);
+      mesh.material = this.depthOnlyMaterials.get(mesh) ?? this.normalMaterial;
+    });
+
     const background = scene.background;
     scene.background = null;
-    scene.overrideMaterial = this.normalMaterial;
     this.renderer.setRenderTarget(this.normalTarget);
     this.renderer.clear();
     this.renderer.render(scene, camera);
 
     // Passata di colore.
-    scene.overrideMaterial = null;
     scene.background = background;
+    for (const [mesh, material] of restore) mesh.material = material;
     for (const object of hidden) object.visible = true;
     this.renderer.setRenderTarget(this.colorTarget);
     this.renderer.clear();
@@ -206,6 +238,7 @@ export class ToonLinePass {
   }
 
   dispose(): void {
+    for (const material of this.depthOnlyMaterials.values()) material.dispose();
     this.colorTarget.dispose();
     this.normalTarget.dispose();
     this.normalMaterial.dispose();

@@ -9,7 +9,7 @@ reagire con una smorfia"*.
 
 | Richiesto | Stato |
 | --- | --- |
-| Primo modello 3D | fatto — caricatura del committente, 12.100 vertici |
+| Primo modello 3D | fatto — corpo 3D più viso dalla caricatura originale |
 | Scheletro funzionante | fatto — 48 bone, dita e controlli facciali compresi |
 | Scena Three.js | fatto — `src/avatar/AvatarRenderer.ts` |
 | Animazione `Idle` | fatto |
@@ -50,10 +50,19 @@ versionabile e diffabile come codice, riproducibile senza dipendenze esterne, e
 modificabile per parametri (un solo numero cambia la proporzione della testa).
 Non è un vincolo: il GLB è un asset sostituibile, vedi `ASSET-CONTRACT.md`.
 
-**2. Espressioni facciali con bone, non con shape key.** La specifica ammette
+**2. Viso disegnato, corpo modellato.** Il volto è la caricatura originale
+applicata come texture a una superficie curva; il corpo è 3D riggato. Il primo
+tentativo modellava anche la testa accostando primitive, e il confronto diretto
+con la caricatura era impietoso: una faccia disegnata non si ottiene con sfere e
+cilindri, perché il naso, gli occhi socchiusi e il tratto sono scelte di
+disegno. Le mani invece devono essere vero 3D, perché le mosse Six Seven sono
+gesti. Dettagli in `ASSET-CONTRACT.md` §9.
+
+**2b. Espressioni facciali con bone, non con shape key.** La specifica ammette
 entrambi. I bone (`Jaw`, `Brow_*`, `Eye_*`, `Lid_*`) sono animabili con lo stesso
-meccanismo del resto del corpo e non richiedono un secondo sistema. Restano
-sostituibili con morph target senza toccare il motore.
+meccanismo del resto del corpo e non richiedono un secondo sistema. Sul viso
+texturizzato agiscono per zone di influenza gaussiane, trascinando la pelle
+dipinta.
 
 **3. Stile grafico nel renderer, non nel modello.** Il GLB conserva solo i colori
 base. Resa toon a colore piatto, contorni e luci vivono in
@@ -113,6 +122,8 @@ Noti dal prototipo, da rifinire:
   l'inquadratura di gioco è a mezzo busto, quindi non è prioritario;
 - la mano chiusa nelle pose di provocazione legge come un blocco unico: va
   separata meglio nelle falangi;
+- il viso non apre la bocca e non sposta lo sguardo: servirebbero altri disegni
+  o un volto modellato;
 - il GLB pesa 880 kB non compresso; con Draco o `meshopt` scende molto, ma la
   specifica chiede prima un prototipo.
 

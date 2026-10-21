@@ -11,6 +11,8 @@
  * che rende sicure le transizioni verso Idle (spec 4.3).
  */
 
+import { faceToWorld, FACE_LANDMARKS, type Landmark } from './face.ts';
+
 export interface BoneDef {
   name: string;
   parent: string | null;
@@ -26,22 +28,14 @@ const FINGERS = [
 ] as const;
 
 /**
- * Ingrandimento caricaturale della testa, applicato attorno all'articolazione
- * del collo. Lo stesso fattore è usato dalla mesh, così bone e geometria
- * restano allineati: cambiare qui la proporzione aggiorna tutto il volto.
+ * Bone facciali: stanno sopra i tratti *disegnati* della caricatura, non su una
+ * geometria 3D. Vengono collocati dietro alla superficie del viso, così
+ * ruotandoli trascinano la pelle dipinta invece di attraversarla — lo stesso
+ * principio del rig 2D del Ritardometro.
  */
-export const HEAD_PIVOT_Y = 1.45;
-export const HEAD_SCALE = 1.33;
-
-/** Centro del bulbo oculare sinistro, prima dell'ingrandimento della testa. */
-export const EYE_L: readonly [number, number, number] = [0.0755, 1.6235, 0.1705];
-
-function headScaled(p: readonly [number, number, number]): [number, number, number] {
-  return [
-    p[0] * HEAD_SCALE,
-    HEAD_PIVOT_Y + (p[1] - HEAD_PIVOT_Y) * HEAD_SCALE,
-    p[2] * HEAD_SCALE,
-  ];
+function behindFace(p: Landmark, depth: number): [number, number, number] {
+  const [x, y, z] = faceToWorld(p);
+  return [x, y, z - depth];
 }
 
 /**
@@ -56,7 +50,7 @@ function headScaled(p: readonly [number, number, number]): [number, number, numb
 const ARM_ANGLE = (20 * Math.PI) / 180;
 const ARM_DIR = [Math.sin(ARM_ANGLE), -Math.cos(ARM_ANGLE), 0] as const;
 
-const UPPER_ARM_L: readonly [number, number, number] = [0.21, 1.27, 0];
+const UPPER_ARM_L: readonly [number, number, number] = [0.188, 1.268, 0];
 const SEGMENT = 0.278;
 
 const ELBOW_L: readonly [number, number, number] = [
@@ -112,7 +106,7 @@ function mirror(bone: BoneDef): BoneDef {
 }
 
 const LEFT_SIDE: BoneDef[] = [
-  { name: 'Shoulder_L', parent: 'Chest', head: [0.07, 1.3, 0] },
+  { name: 'Shoulder_L', parent: 'Chest', head: [0.065, 1.298, 0] },
   { name: 'UpperArm_L', parent: 'Shoulder_L', head: UPPER_ARM_L },
   { name: 'LowerArm_L', parent: 'UpperArm_L', head: ELBOW_L },
   { name: 'Hand_L', parent: 'LowerArm_L', head: HAND_L },
@@ -131,19 +125,16 @@ export const RIG: readonly BoneDef[] = [
   { name: 'Neck', parent: 'Chest', head: [0, 1.35, 0] },
   { name: 'Head', parent: 'Neck', head: [0, 1.45, 0] },
 
-  // Controlli facciali: niente shape key, le espressioni sono guidate da bone
-  // dedicati (spec 3.2 — "controlli o shape key"). Restano sostituibili con
-  // morph target in una versione successiva senza toccare il motore.
-  { name: 'Jaw', parent: 'Head', head: headScaled([0, 1.565, 0.03]) },
-  { name: 'Brow_L', parent: 'Head', head: headScaled([0.082, 1.672, 0.15]) },
-  { name: 'Brow_R', parent: 'Head', head: headScaled([-0.082, 1.672, 0.15]) },
-  // Occhi e palpebre condividono il perno: è il centro del bulbo. Solo così la
-  // pupilla ruota restando sulla superficie e la palpebra le scorre sopra
-  // invece di affondare nella testa.
-  { name: 'Eye_L', parent: 'Head', head: headScaled(EYE_L) },
-  { name: 'Eye_R', parent: 'Head', head: headScaled([-EYE_L[0], EYE_L[1], EYE_L[2]]) },
-  { name: 'Lid_L', parent: 'Head', head: headScaled(EYE_L) },
-  { name: 'Lid_R', parent: 'Head', head: headScaled([-EYE_L[0], EYE_L[1], EYE_L[2]]) },
+  // Controlli facciali. Le palpebre stanno 5 cm dietro al viso: con quel
+  // braccio di leva una rotazione su X di 52° trascina la pelle verso il basso
+  // di circa 4 cm, quanto basta a chiudere l'occhio disegnato.
+  { name: 'Jaw', parent: 'Head', head: behindFace(FACE_LANDMARKS.mouth, 0.028) },
+  { name: 'Brow_L', parent: 'Head', head: behindFace(FACE_LANDMARKS.brow_L, 0.05) },
+  { name: 'Brow_R', parent: 'Head', head: behindFace(FACE_LANDMARKS.brow_R, 0.05) },
+  { name: 'Eye_L', parent: 'Head', head: behindFace(FACE_LANDMARKS.eye_L, 0.02) },
+  { name: 'Eye_R', parent: 'Head', head: behindFace(FACE_LANDMARKS.eye_R, 0.02) },
+  { name: 'Lid_L', parent: 'Head', head: behindFace(FACE_LANDMARKS.eye_L, 0.05) },
+  { name: 'Lid_R', parent: 'Head', head: behindFace(FACE_LANDMARKS.eye_R, 0.05) },
 
   ...LEFT_SIDE,
   ...LEFT_SIDE.map(mirror),

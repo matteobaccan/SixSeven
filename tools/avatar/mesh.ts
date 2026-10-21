@@ -12,8 +12,9 @@
  */
 import * as THREE from 'three';
 import { PALETTE, type PaletteKey } from './palette.ts';
-import { BONE_GROUPS, EYE_L, FINGER_IDS, HEAD_PIVOT_Y, HEAD_SCALE, RIG } from './rig.ts';
-import { arc, boxAt, cap, curve, deg, ellipsoid, shape, tube, type Vec3 } from './geometry.ts';
+import { BONE_GROUPS, FINGER_IDS, RIG } from './rig.ts';
+import { FACE_CROP, FACE_IMAGE, FACE_LANDMARKS, faceToWorld } from './face.ts';
+import { arc, boxAt, deg, ellipsoid, tube, type Vec3 } from './geometry.ts';
 
 export interface Part {
   geometry: THREE.BufferGeometry;
@@ -21,254 +22,134 @@ export interface Part {
   bones: readonly string[];
   /** Esponente del falloff: alto = skinning più rigido. */
   power?: number;
+  /** La parte porta già i propri pesi di skinning: non ricalcolarli. */
+  preskinned?: boolean;
 }
 
-const HEAD_CENTER: Vec3 = [0, 1.595, 0];
-const HEAD_R = 0.2;
-
 // ---------------------------------------------------------------------------
-// Testa
+// Viso: la caricatura come texture su una superficie curva
 // ---------------------------------------------------------------------------
 
-/** Deformazione della calotta, condivisa da mesh e linee del viso. */
-function skullShape(x: number, y: number, z: number): Vec3 {
-  const v = y / HEAD_R; // -1 (mento) .. 1 (cupola)
-  const lower = Math.max(0, -v);
-  const upper = Math.max(0, v);
-  const narrow = 1 - 0.23 * lower * lower + 0.03 * upper;
-  return [x * narrow * 1.03, y * 1.05, z * (1 - 0.1 * lower * lower) + 0.035 * lower * lower];
+/** Suddivisione della superficie del viso: serve a deformarla, non a sagomarla. */
+const FACE_COLS = 30;
+const FACE_ROWS = 38;
+
+/** Influenza gaussiana in pixel immagine, attorno a un tratto del disegno. */
+function influence(
+  x: number,
+  y: number,
+  centre: { x: number; y: number },
+  rx: number,
+  ry: number,
+): number {
+  const dx = (x - centre.x) / rx;
+  const dy = (y - centre.y) / ry;
+  return Math.exp(-(dx * dx + dy * dy));
+}
+
+function boneIndex(name: string): number {
+  const index = RIG.findIndex((b) => b.name === name);
+  if (index < 0) throw new Error(`Bone non trovato nel rig: ${name}`);
+  return index;
 }
 
 /**
- * Punto sulla superficie del viso in coordinate sferiche: `yaw` positivo va
- * verso la sinistra anatomica, `pitch` positivo verso l'alto. `lift` stacca il
- * punto dalla pelle quel tanto che basta perché una linea non compenetri.
+ * Superficie del viso: griglia texturizzata con la caricatura, curvata a
+ * parabola per dare volume e ritagliata dal canale alfa della texture stessa.
  *
- * Avere questa funzione, invece di coordinate scritte a mano, è ciò che rende
- * modificabili le linee del viso: cambiando la forma del cranio le rughe
- * restano appoggiate sopra.
+ * I pesi di skinning non si possono calcolare per distanza dai bone come per il
+ * resto del corpo: qui le "articolazioni" sono tratti disegnati, non volumi. Si
+ * usano quindi zone di influenza gaussiane centrate sui punti misurati
+ * sull'immagine, come nel rig 2D del Ritardometro. Ruotando `Lid_L` la pelle
+ * dipinta scende sopra l'occhio: è così che il personaggio sbatte le palpebre
+ * pur essendo un disegno.
  */
-function facePoint(yawDeg: number, pitchDeg: number, lift = 0.005): Vec3 {
-  const yaw = deg(yawDeg);
-  const pitch = deg(pitchDeg);
-  const ux = Math.sin(yaw) * Math.cos(pitch);
-  const uy = Math.sin(pitch);
-  const uz = Math.cos(yaw) * Math.cos(pitch);
-  const [px, py, pz] = skullShape(ux * HEAD_R, uy * HEAD_R, uz * HEAD_R);
-  const length = Math.hypot(px, py, pz) || 1;
-  const k = 1 + lift / length;
-  return [HEAD_CENTER[0] + px * k, HEAD_CENTER[1] + py * k, HEAD_CENTER[2] + pz * k];
-}
+function faceCard(): Part {
+  const positions: number[] = [];
+  const uvs: number[] = [];
+  const indices: number[] = [];
+  const skinIndex: number[] = [];
+  const skinWeight: number[] = [];
 
-/** Spessore delle linee disegnate sul viso, prima dell'ingrandimento testa. */
-const INK = 0.0026;
+  const head = boneIndex('Head');
+  // Su un viso disegnato l'apertura della bocca è il movimento più delicato:
+  // trascinare troppo allunga il mento invece di aprire le labbra. Da qui il
+  // braccio di leva corto della mandibola nel rig e il raggio contenuto.
+  const zones = [
+    { bone: boneIndex('Lid_L'), centre: FACE_LANDMARKS.eye_L, rx: 56, ry: 38 },
+    { bone: boneIndex('Lid_R'), centre: FACE_LANDMARKS.eye_R, rx: 56, ry: 38 },
+    { bone: boneIndex('Brow_L'), centre: FACE_LANDMARKS.brow_L, rx: 62, ry: 26 },
+    { bone: boneIndex('Brow_R'), centre: FACE_LANDMARKS.brow_R, rx: 62, ry: 26 },
+    { bone: boneIndex('Jaw'), centre: FACE_LANDMARKS.mouth, rx: 88, ry: 44 },
+  ];
 
-/**
- * Linee del viso. Nel riferimento grafico il volume non è raccontato dalle
- * ombre ma dal tratto: rughe della fronte, pieghe naso-labiali, zampe di
- * gallina e occhiaie. Senza queste linee il personaggio resta una bambola
- * liscia, con poca età e poca espressione.
- */
-function faceLines(): Part[] {
-  const parts: Part[] = [];
-  // Le rughe della fronte sono legate alle sopracciglia: si alzano con loro.
-  const browBones = ['Brow_L', 'Brow_R', 'Head'];
+  for (let row = 0; row <= FACE_ROWS; row++) {
+    const v = row / FACE_ROWS;
+    const imgY = FACE_CROP.y0 + (FACE_CROP.y1 - FACE_CROP.y0) * v;
 
-  for (const [pitch, bump, span, weight] of [
-    [29, 2.2, 21, 0.78],
-    [35.5, 1.8, 16, 0.6],
-  ] as const) {
-    parts.push({
-      geometry: curve(
-        [
-          facePoint(-span, pitch - 1),
-          facePoint(-span * 0.5, pitch + bump),
-          facePoint(0, pitch + bump * 0.6),
-          facePoint(span * 0.5, pitch + bump),
-          facePoint(span, pitch - 1),
-        ],
-        INK * weight,
-        26,
-      ),
-      material: 'ink',
-      bones: browBones,
-      power: 2,
-    });
-  }
+    for (let col = 0; col <= FACE_COLS; col++) {
+      const u = col / FACE_COLS;
+      const imgX = FACE_CROP.x0 + (FACE_CROP.x1 - FACE_CROP.x0) * u;
 
-  for (const s of [1, -1]) {
-    // Piega naso-labiale: dall'ala del naso all'angolo della bocca.
-    parts.push({
-      geometry: curve(
-        [
-          facePoint(s * 9.5, -5),
-          facePoint(s * 14, -11),
-          facePoint(s * 16.5, -17.5),
-        ],
-        INK * 0.85,
-        18,
-      ),
-      material: 'ink',
-      bones: BONE_GROUPS.face,
-      power: 4,
-    });
+      const [x, y, z] = faceToWorld({ x: imgX, y: imgY });
+      positions.push(x, y, z);
+      // La texture è l'immagine intera: le UV puntano al ritaglio della testa.
+      uvs.push(imgX / FACE_IMAGE.width, 1 - imgY / FACE_IMAGE.height);
 
-    // Accenno di occhiaia: corto e alto, altrimenti legge come un taglio.
-    parts.push({
-      geometry: curve(
-        [facePoint(s * 12, -0.5), facePoint(s * 18, -1.8), facePoint(s * 23, 0.6)],
-        INK * 0.8,
-        14,
-      ),
-      material: 'ink',
-      bones: BONE_GROUPS.head,
-      power: 5,
-    });
+      // Le tre zone più influenti più la testa: quattro influenze, il massimo
+      // che glTF trasporta per vertice.
+      const ranked = zones
+        .map((zone) => ({ bone: zone.bone, w: influence(imgX, imgY, zone.centre, zone.rx, zone.ry) }))
+        .sort((a, b) => b.w - a.w)
+        .slice(0, 3)
+        .filter((entry) => entry.w > 0.01);
 
-    // Zampe di gallina all'angolo esterno dell'occhio.
-    for (const [p0, p1] of [
-      [10, 13],
-      [6, 7],
-    ] as const) {
-      parts.push({
-        geometry: curve([facePoint(s * 25, p0), facePoint(s * 30, p1)], INK * 0.8, 8),
-        material: 'ink',
-        bones: BONE_GROUPS.head,
-        power: 5,
-      });
+      const pull = Math.min(0.9, ranked.reduce((sum, entry) => sum + entry.w, 0) * 0.9);
+      const entries = [{ bone: head, w: 1 - pull }, ...ranked.map((e) => ({ bone: e.bone, w: e.w * 0.9 }))];
+      const total = entries.reduce((sum, e) => sum + e.w, 0);
+
+      for (let i = 0; i < 4; i++) {
+        const entry = entries[i];
+        skinIndex.push(entry ? entry.bone : 0);
+        skinWeight.push(entry ? entry.w / total : 0);
+      }
     }
   }
 
-  return parts;
+  const stride = FACE_COLS + 1;
+  for (let row = 0; row < FACE_ROWS; row++) {
+    for (let col = 0; col < FACE_COLS; col++) {
+      const a = row * stride + col;
+      const b = a + 1;
+      const c = a + stride;
+      const d = c + 1;
+      indices.push(a, c, b, b, c, d);
+    }
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(skinIndex, 4));
+  geometry.setAttribute('skinWeight', new THREE.Float32BufferAttribute(skinWeight, 4));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+
+  return { geometry, material: 'face', bones: [], preskinned: true };
 }
 
 function head(): Part[] {
-  // Sfera rimodellata: cranio ampio e calvo, mascella più stretta, mento
-  // leggermente in avanti. Proporzioni caricaturali (testa ~1/4 dell'altezza).
-  const skull = shape(new THREE.SphereGeometry(HEAD_R, 32, 24), skullShape);
-  skull.translate(HEAD_CENTER[0], HEAD_CENTER[1], HEAD_CENTER[2]);
-
-  const parts: Part[] = [{ geometry: skull, material: 'skin', bones: BONE_GROUPS.head, power: 3 }];
-
-  // Orecchie sporgenti.
-  for (const s of [1, -1]) {
-    parts.push({
-      geometry: ellipsoid(
-        [s * 0.197, 1.578, 0.008],
-        [0.027, 0.058, 0.043],
-        [14, 10],
-        [0, 0, deg(s * -6)],
-      ),
-      material: 'ear',
-      bones: BONE_GROUPS.head,
-      power: 6,
-    });
-  }
-
-  // Naso pronunciato: ponte + punta bulbosa + pinne.
-  parts.push({
-    geometry: tube([0, 1.652, 0.179], [0, 1.601, 0.208], 0.016, 0.028, 12, 4),
-    material: 'nose',
-    bones: BONE_GROUPS.face,
-    power: 6,
-  });
-  parts.push({
-    geometry: ellipsoid([0, 1.587, 0.219], [0.037, 0.034, 0.045], [18, 12]),
-    material: 'nose',
-    bones: BONE_GROUPS.face,
-    power: 6,
-  });
-  for (const s of [1, -1]) {
-    parts.push({
-      geometry: ellipsoid([s * 0.035, 1.575, 0.199], [0.019, 0.017, 0.025], [12, 8]),
-      material: 'nose',
-      bones: BONE_GROUPS.face,
-      power: 6,
-    });
-  }
-
-  // Occhio: bulbo sferico, pupilla appoggiata sulla sua superficie e palpebra
-  // come calotta concentrica. La concentricità è il punto: la palpebra ruota
-  // attorno al centro del bulbo e lo copre scorrendogli sopra.
-  const EYE_R_RADIUS = 0.0315;
-  for (const [s, white, pupil, lid] of [
-    [1, BONE_GROUPS.head, BONE_GROUPS.eyeL, BONE_GROUPS.lidL],
-    [-1, BONE_GROUPS.head, BONE_GROUPS.eyeR, BONE_GROUPS.lidR],
-  ] as const) {
-    const eye: Vec3 = [s * EYE_L[0], EYE_L[1], EYE_L[2]];
-
-    parts.push({
-      geometry: ellipsoid(eye, [EYE_R_RADIUS, EYE_R_RADIUS, EYE_R_RADIUS], [20, 14]),
-      material: 'eyeWhite',
-      bones: white,
-      power: 8,
-    });
-    parts.push({
-      geometry: ellipsoid(
-        [eye[0], eye[1] - 0.001, eye[2] + 0.0225],
-        [0.0145, 0.0145, 0.0105],
-        [14, 10],
-      ),
-      material: 'pupil',
-      bones: pupil,
-      power: 8,
-    });
-    // Copertura di 64°: a riposo la palpebra lascia scoperto l'occhio dalla
-    // linea delle ciglia in giù; una rotazione su X di 52° lo chiude del tutto.
-    parts.push({
-      geometry: cap(eye, EYE_R_RADIUS + 0.004, deg(64)),
+  return [
+    faceCard(),
+    // Collo: riempie lo spazio dietro al viso all'altezza dello scollo, così
+    // non si vede l'interno del maglione quando la testa ruota.
+    {
+      geometry: tube([0, 1.29, 0], [0, 1.47, 0], 0.094, 0.082, 18, 6),
       material: 'skin',
-      bones: lid,
-      power: 8,
-    });
-  }
-
-  // Sopracciglia folte e marcate, inclinate verso l'interno.
-  for (const [s, group] of [
-    [1, BONE_GROUPS.browL],
-    [-1, BONE_GROUPS.browR],
-  ] as const) {
-    parts.push({
-      geometry: ellipsoid(
-        [s * 0.079, 1.6845, 0.1665],
-        [0.049, 0.0125, 0.017],
-        [14, 8],
-        [0, 0, deg(s * 9)],
-      ),
-      material: 'browHair',
-      bones: group,
-      power: 8,
-    });
-  }
-
-  // Bocca: arco sorridente leggermente asimmetrico, legato alla mandibola.
-  parts.push({
-    geometry: arc([0, 1.549, 0.179], 0.049, 0.0085, deg(110), [deg(6), 0, deg(-90)], [6, 22]),
-    material: 'mouth',
-    bones: BONE_GROUPS.jaw,
-    power: 6,
-  });
-
-  parts.push(...faceLines());
-
-  // Ingrandimento caricaturale: testa e volto crescono attorno
-  // all'articolazione del collo, con lo stesso fattore usato dai bone.
-  const enlarge = new THREE.Matrix4()
-    .makeTranslation(0, HEAD_PIVOT_Y, 0)
-    .multiply(new THREE.Matrix4().makeScale(HEAD_SCALE, HEAD_SCALE, HEAD_SCALE))
-    .multiply(new THREE.Matrix4().makeTranslation(0, -HEAD_PIVOT_Y, 0));
-  for (const part of parts) part.geometry.applyMatrix4(enlarge);
-
-  // Collo: resta nelle proporzioni del busto, appena più spesso per reggere
-  // visivamente la testa ingrandita.
-  parts.push({
-    geometry: tube([0, 1.29, 0], [0, 1.47, 0], 0.094, 0.082, 18, 6),
-    material: 'skin',
-    bones: BONE_GROUPS.head,
-    power: 2.5,
-  });
-
-  return parts;
+      bones: BONE_GROUPS.head,
+      power: 2.5,
+    },
+  ];
 }
 
 // ---------------------------------------------------------------------------
@@ -347,22 +228,22 @@ function torso(): Part[] {
   // evita i raccordi visibili che lasciava il cilindro.
   const profile: readonly [number, number][] = [
     [0.001, 0.726],
-    [0.15, 0.728],
-    [0.222, 0.735],
-    [0.243, 0.75],
-    [0.246, 0.8],
-    [0.248, 0.88],
-    [0.252, 0.97],
-    [0.262, 1.06],
-    [0.272, 1.14],
-    [0.2805, 1.196],
-    [0.2838, 1.238],
-    [0.2805, 1.272],
-    [0.2655, 1.299],
-    [0.2415, 1.319],
-    [0.2055, 1.335],
-    [0.162, 1.3455],
-    [0.124, 1.352],
+    [0.14, 0.728],
+    [0.205, 0.735],
+    [0.224, 0.75],
+    [0.227, 0.8],
+    [0.229, 0.88],
+    [0.232, 0.97],
+    [0.238, 1.06],
+    [0.246, 1.14],
+    [0.251, 1.196],
+    [0.2515, 1.232],
+    [0.2465, 1.266],
+    [0.2335, 1.295],
+    [0.2125, 1.317],
+    [0.183, 1.334],
+    [0.148, 1.3455],
+    [0.129, 1.354],
   ];
   const body = new THREE.LatheGeometry(
     profile.map(([r, y]) => new THREE.Vector2(r, y)),
@@ -372,27 +253,27 @@ function torso(): Part[] {
   parts.push({ geometry: body, material: 'sweater', bones: BONE_GROUPS.torso, power: 2.2 });
 
   // Bordo a coste in fondo al maglione.
-  const hem = new THREE.CylinderGeometry(0.251, 0.245, 0.062, 30, 2, false);
+  const hem = new THREE.CylinderGeometry(0.231, 0.226, 0.062, 30, 2, false);
   hem.translate(0, 0.757, 0);
   hem.scale(1, 1, 0.74);
   parts.push({ geometry: hem, material: 'sweaterRib', bones: BONE_GROUPS.torso, power: 4 });
 
   // Costina del girocollo attorno all'apertura.
-  const neckRib = new THREE.TorusGeometry(0.124, 0.019, 8, 30);
+  const neckRib = new THREE.TorusGeometry(0.129, 0.019, 8, 30);
   neckRib.rotateX(Math.PI / 2);
   neckRib.scale(1, 1, 0.74);
-  neckRib.translate(0, 1.349, 0);
+  neckRib.translate(0, 1.352, 0);
   parts.push({ geometry: neckRib, material: 'sweaterRib', bones: BONE_GROUPS.collar, power: 4 });
 
   // Camicia a righe: tubo sotto il maglione, visibile nello scollo.
-  parts.push(...stripedRing(1.17, 1.372, 0.108, 0.82, BONE_GROUPS.collar, 14));
+  parts.push(...stripedRing(1.17, 1.402, 0.118, 0.95, BONE_GROUPS.collar, 14));
 
   // Punte del colletto, appoggiate sopra il girocollo.
   for (const s of [1, -1]) {
     parts.push(
       ...stripedPanel(
-        [s * 0.108, 1.336, 0.112],
-        [0.125, 0.028, 0.094],
+        [s * 0.112, 1.356, 0.126],
+        [0.128, 0.028, 0.096],
         [deg(-26), deg(s * -30), deg(s * 10)],
         BONE_GROUPS.collar,
         5,
@@ -402,7 +283,7 @@ function torso(): Part[] {
 
   // Fascia del colletto dietro al collo.
   parts.push({
-    geometry: arc([0, 1.372, -0.012], 0.113, 0.024, deg(210), [deg(90), 0, deg(90)], [6, 20]),
+    geometry: arc([0, 1.398, -0.012], 0.122, 0.024, deg(210), [deg(90), 0, deg(90)], [6, 20]),
     material: 'shirtWhite',
     bones: BONE_GROUPS.collar,
     power: 5,
@@ -431,9 +312,22 @@ function arms(): Part[] {
     const elbow = boneHead(`LowerArm_${side}`);
     const wrist = boneHead(`Hand_${side}`);
 
+    // La manica parte qualche centimetro *dentro* al busto: altrimenti la
+    // calotta piatta del tubo sporge dal maglione come una spallina.
+    const dir: Vec3 = [
+      (elbow[0] - shoulder[0]) / 0.278,
+      (elbow[1] - shoulder[1]) / 0.278,
+      (elbow[2] - shoulder[2]) / 0.278,
+    ];
+    const sleeveTop: Vec3 = [
+      shoulder[0] - dir[0] * 0.075,
+      shoulder[1] - dir[1] * 0.075,
+      shoulder[2] - dir[2] * 0.075,
+    ];
+
     // Maniche del maglione: molti segmenti in altezza per una piega pulita al gomito.
     parts.push({
-      geometry: tube(shoulder, elbow, 0.118, 0.096, 18, 12),
+      geometry: tube(sleeveTop, elbow, 0.112, 0.096, 18, 12),
       material: 'sweater',
       bones: group,
       power: 2.5,
@@ -525,13 +419,13 @@ function legs(): Part[] {
     const ankle = boneHead(`Foot_${side}`);
 
     parts.push({
-      geometry: tube(hip, knee, 0.138, 0.112, 16, 8),
+      geometry: tube(hip, knee, 0.124, 0.104, 16, 8),
       material: 'trousers',
       bones: group,
       power: 2.5,
     });
     parts.push({
-      geometry: tube(knee, ankle, 0.112, 0.09, 16, 8),
+      geometry: tube(knee, ankle, 0.104, 0.086, 16, 8),
       material: 'trousers',
       bones: group,
       power: 2.5,

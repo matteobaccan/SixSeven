@@ -16,6 +16,7 @@ import type { CatalogEntry } from './assets/AssetCatalog.ts';
 import { UIController } from './ui/UIController.ts';
 
 const AVATAR_URL = `${import.meta.env.BASE_URL}assets/avatar.glb`;
+const FACE_URL = `${import.meta.env.BASE_URL}assets/face.png`;
 
 async function boot(): Promise<void> {
   const canvas = document.getElementById('stage') as HTMLCanvasElement | null;
@@ -31,7 +32,11 @@ async function boot(): Promise<void> {
 
   // Su schermi ad alta densità il cap sul pixel ratio tiene il costo per frame
   // sotto controllo senza interventi sulla scena (spec 9 — prestazioni).
-  const renderer = new AvatarRenderer(canvas, { maxPixelRatio: 2, enableInspect: true });
+  const renderer = new AvatarRenderer(canvas, {
+    maxPixelRatio: 2,
+    enableInspect: true,
+    faceTextureUrl: FACE_URL,
+  });
 
   let avatar;
   try {

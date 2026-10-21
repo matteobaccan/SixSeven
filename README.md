@@ -4,6 +4,10 @@ Web app interattiva con avatar 3D: un personaggio cartoon esegue una mossa
 ispirata al meme *Six Seven* e invita il giocatore a replicarla davanti alla
 telecamera.
 
+L'avatar è ibrido: **corpo 3D riggato** — serve per i gesti — e **viso dalla
+caricatura originale**, applicato come texture a una superficie curva e animato
+per zone di influenza (palpebre, sopracciglia, mandibola).
+
 **Stato: prototipo Fase 1.** L'avatar 3D è riggato, animato e caricato nel
 browser come GLB. Il ciclo di gioco completo (turni, telecamera, microfono)
 appartiene alle fasi successive — vedi `docs/PHASE1.md`.
@@ -75,3 +79,9 @@ pannello cosa ha riconosciuto.
 ## Licenza
 
 MIT — vedi `LICENSE`.
+
+## Crediti
+
+Il viso dell'avatar (`public/assets/face.png`) e la palette provengono dalla
+caricatura del progetto [Ritardometro](https://github.com/matteobaccan/Ritardometro)
+dello stesso autore, anch'esso MIT.

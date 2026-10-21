@@ -85,52 +85,6 @@ export function arc(
   return g;
 }
 
-/**
- * Calotta sferica: una porzione di sfera attorno a `center`. Serve per la
- * palpebra, che deve scorrere sopra il bulbo restando concentrica a esso.
- */
-export function cap(
-  center: Vec3,
-  radius: number,
-  coverage: number,
-  seg: [number, number] = [20, 12],
-): THREE.BufferGeometry {
-  const g = new THREE.SphereGeometry(radius, seg[0], seg[1], 0, Math.PI * 2, 0, coverage);
-  g.translate(center[0], center[1], center[2]);
-  return g;
-}
 
-/**
- * Tubo lungo una curva passante per i punti dati: serve per le linee disegnate
- * sul viso (rughe, pieghe), che devono seguire la superficie del cranio.
- */
-export function curve(
-  points: readonly Vec3[],
-  radius: number,
-  tubularSegments = 24,
-  radialSegments = 5,
-): THREE.BufferGeometry {
-  const path = new THREE.CatmullRomCurve3(
-    points.map((p) => new THREE.Vector3(p[0], p[1], p[2])),
-    false,
-    'catmullrom',
-    0.4,
-  );
-  return new THREE.TubeGeometry(path, tubularSegments, radius, radialSegments, false);
-}
-
-/** Deforma i vertici con una funzione arbitraria (usata per la testa). */
-export function shape(
-  g: THREE.BufferGeometry,
-  fn: (x: number, y: number, z: number) => Vec3,
-): THREE.BufferGeometry {
-  const pos = g.attributes.position as THREE.BufferAttribute;
-  for (let i = 0; i < pos.count; i++) {
-    const [x, y, z] = fn(pos.getX(i), pos.getY(i), pos.getZ(i));
-    pos.setXYZ(i, x, y, z);
-  }
-  pos.needsUpdate = true;
-  return g;
-}
 
 export const deg = (d: number): number => (d * Math.PI) / 180;

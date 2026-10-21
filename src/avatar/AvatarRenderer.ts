@@ -26,6 +26,9 @@ import {
   PerspectiveCamera,
   Scene,
   SkinnedMesh,
+  SRGBColorSpace,
+  type Texture,
+  TextureLoader,
   Vector3,
   WebGLRenderer,
   NearestFilter,
@@ -40,6 +43,12 @@ export interface LoadedAvatar {
   skinned: SkinnedMesh[];
 }
 
+/**
+ * Nome del materiale che riceve la texture della caricatura. Il viso non è
+ * modellato: è il disegno originale applicato a una superficie curva.
+ */
+const FACE_MATERIAL = 'face';
+
 export interface RendererOptions {
   /** Limite del devicePixelRatio: abbassarlo riduce il costo per frame. */
   maxPixelRatio?: number;
@@ -47,6 +56,8 @@ export interface RendererOptions {
   lineWidth?: number;
   /** Consente di ruotare l'avatar trascinando: utile in fase di prototipo. */
   enableInspect?: boolean;
+  /** Texture del viso; se assente il materiale `face` resta bianco. */
+  faceTextureUrl?: string;
 }
 
 /**
@@ -89,6 +100,7 @@ export class AvatarRenderer {
   private onFrame: ((dt: number) => void) | null = null;
   private resizeObserver: ResizeObserver | null = null;
   private detachInspect: (() => void) | null = null;
+  private faceTexture: Texture | null = null;
 
   constructor(canvas: HTMLCanvasElement, options: RendererOptions = {}) {
     this.canvas = canvas;
@@ -96,6 +108,7 @@ export class AvatarRenderer {
       maxPixelRatio: options.maxPixelRatio ?? 2,
       lineWidth: options.lineWidth ?? 1.15,
       enableInspect: options.enableInspect ?? true,
+      faceTextureUrl: options.faceTextureUrl ?? '',
     };
 
     this.renderer = new WebGLRenderer({ canvas, antialias: true });
@@ -203,9 +216,20 @@ export class AvatarRenderer {
   }
 
   async load(url: string, onProgress?: (ratio: number) => void): Promise<LoadedAvatar> {
-    const gltf = await new GLTFLoader().loadAsync(url, (event) => {
-      if (event.lengthComputable && onProgress) onProgress(event.loaded / event.total);
-    });
+    const [gltf, faceTexture] = await Promise.all([
+      new GLTFLoader().loadAsync(url, (event) => {
+        if (event.lengthComputable && onProgress) onProgress(event.loaded / event.total);
+      }),
+      this.options.faceTextureUrl
+        ? new TextureLoader().loadAsync(this.options.faceTextureUrl)
+        : Promise.resolve(null),
+    ]);
+
+    if (faceTexture) {
+      faceTexture.colorSpace = SRGBColorSpace;
+      faceTexture.anisotropy = 4;
+      this.faceTexture = faceTexture;
+    }
 
     const root = gltf.scene;
     const skinned: SkinnedMesh[] = [];
@@ -223,14 +247,31 @@ export class AvatarRenderer {
     return { root, clips: gltf.animations, skinned };
   }
 
-  /** Converte i materiali del GLB in resa toon mantenendone i colori base. */
+  /**
+   * Converte i materiali del GLB in resa toon mantenendone i colori base.
+   *
+   * Il viso fa eccezione: riceve la texture della caricatura ed è reso *non
+   * illuminato*, perché luci e ombre sono già dipinte nel disegno. Illuminarlo
+   * lo sporcherebbe con un secondo chiaroscuro.
+   */
   private applyToonStyle(meshes: SkinnedMesh[]): void {
     for (const mesh of meshes) {
       const wasArray = Array.isArray(mesh.material);
       const source = wasArray
         ? (mesh.material as MeshStandardMaterial[])
         : [mesh.material as MeshStandardMaterial];
-      const converted = source.map((std) => {
+      let isFace = false;
+      const converted = source.map((std): MeshToonMaterial | MeshBasicMaterial => {
+        if (std.name === FACE_MATERIAL && this.faceTexture) {
+          isFace = true;
+          const face = new MeshBasicMaterial({
+            map: this.faceTexture,
+            alphaTest: 0.5,
+            toneMapped: false,
+          });
+          face.name = std.name;
+          return face;
+        }
         const toon = new MeshToonMaterial({
           color: std.color ? std.color.clone() : new Color(0xffffff),
           gradientMap: this.gradient,
@@ -242,6 +283,9 @@ export class AvatarRenderer {
       // priva di gruppi, Three.js non disegnerebbe nulla.
       mesh.material = wasArray ? converted : converted[0];
       mesh.frustumCulled = false;
+      // Il disegno porta già i propri contorni: al viso serve solo la
+      // profondità, altrimenti il filtro dei bordi ci disegna sopra.
+      if (isFace && this.faceTexture) this.lines.depthOnly(mesh, this.faceTexture);
     }
   }
 
@@ -306,6 +350,7 @@ export class AvatarRenderer {
       else material?.dispose();
     });
     this.gradient.dispose();
+    this.faceTexture?.dispose();
     this.lines.dispose();
     this.renderer.dispose();
   }

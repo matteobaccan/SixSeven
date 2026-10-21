@@ -22,7 +22,8 @@ export const PALETTE = {
   shirtWhite: 0xf0f0f0,
   shirtBlue: 0x608490,
   shirtPurple: 0x60546c,
-  ink: 0x101010,
+  // Il viso è una texture: il materiale resta bianco e non tinge il disegno.
+  face: 0xffffff,
   trousers: 0x3a4150,
   shoes: 0x26282e,
   outline: 0x0b0b0b,
@@ -37,7 +38,7 @@ export const MATERIAL_KEYS: PaletteKey[] = [
   'ear',
   'nose',
   'browHair',
-  'ink',
+  'face',
   'eyeWhite',
   'pupil',
   'mouth',
