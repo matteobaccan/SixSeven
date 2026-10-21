@@ -1,0 +1,302 @@
+/* Six Seven — stile mobile-first, orientamento verticale come configurazione
+   iniziale (spec 9). I colori riprendono la caricatura di riferimento. */
+
+:root {
+  --bg: #f4efe6;
+  --bg-stage-top: #fbf8f2;
+  --bg-stage-bottom: #e8e0d2;
+  --panel: #ffffff;
+  --ink: #23201c;
+  --ink-soft: #6b6459;
+  --line: #ded5c6;
+  --accent: #40703a;
+  --accent-dark: #2f5429;
+  --accent-soft: #e6efe2;
+  --radius: 14px;
+  --shadow: 0 2px 10px rgba(35, 32, 28, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+/* --- Scena 3D --- */
+
+.stage-wrap {
+  position: relative;
+  flex: 1 1 52dvh;
+  min-height: 42dvh;
+  background: linear-gradient(170deg, var(--bg-stage-top) 0%, var(--bg-stage-bottom) 100%);
+  border-bottom: 1px solid var(--line);
+  padding-top: env(safe-area-inset-top);
+}
+
+#stage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: pan-y;
+  cursor: grab;
+}
+
+#stage:active {
+  cursor: grabbing;
+}
+
+.fps {
+  position: absolute;
+  top: calc(8px + env(safe-area-inset-top));
+  right: 10px;
+  margin: 0;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+  opacity: 0.7;
+}
+
+.loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+  background: var(--bg-stage-top);
+  transition: opacity 0.3s ease;
+}
+
+.loader.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loader.is-error {
+  color: #8c2f24;
+}
+
+.loader p {
+  margin: 0;
+  font-size: 15px;
+}
+
+.loader-track {
+  width: min(240px, 70%);
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.loader-bar {
+  width: 0;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.2s ease;
+}
+
+.loader.is-error .loader-bar {
+  background: #8c2f24;
+}
+
+/* --- Pannello comandi --- */
+
+.panel {
+  background: var(--panel);
+  padding: 16px 16px calc(20px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.panel h1 {
+  margin: 0;
+  font-size: 19px;
+  letter-spacing: -0.01em;
+}
+
+.tag {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent-dark);
+  background: var(--accent-soft);
+  border-radius: 999px;
+  padding: 3px 8px;
+  vertical-align: 2px;
+}
+
+.status {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.panel h2 {
+  margin: 4px 0 0;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+}
+
+.primary {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+button {
+  font: inherit;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  padding: 14px 16px;
+  min-height: 48px; /* bersaglio comodo anche per bambini (spec 9) */
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+button:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.demo {
+  background: var(--accent);
+  border-color: var(--accent-dark);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: var(--shadow);
+}
+
+.ghost {
+  color: var(--ink-soft);
+  padding-inline: 14px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.move {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  text-align: left;
+  background: #fcfbf8;
+}
+
+.move:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.move-id {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-dark);
+  letter-spacing: 0.04em;
+}
+
+.move-name {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.planned {
+  font-size: 13px;
+  color: var(--ink-soft);
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.planned summary {
+  cursor: pointer;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.planned ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  line-height: 1.7;
+}
+
+.hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+/* --- Orizzontale e schermi larghi: scena e comandi affiancati --- */
+
+@media (min-width: 760px) and (orientation: landscape) {
+  .app {
+    flex-direction: row;
+  }
+
+  .stage-wrap {
+    flex: 1 1 60%;
+    border-bottom: none;
+    border-right: 1px solid var(--line);
+  }
+
+  .panel {
+    flex: 0 0 380px;
+    overflow-y: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button,
+  .loader,
+  .loader-bar {
+    transition: none;
+  }
+}

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f4efe6" />
+    <title>Six Seven — prototipo avatar 3D</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="stage-wrap">
+        <canvas id="stage" aria-label="Avatar 3D di Six Seven"></canvas>
+        <p id="fps" class="fps" aria-hidden="true">— fps</p>
+        <div id="loader" class="loader">
+          <p id="loader-text">Caricamento dell'avatar…</p>
+          <div class="loader-track"><div id="loader-bar" class="loader-bar"></div></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <header class="panel-head">
+          <h1>Six Seven <span class="tag">prototipo 0.1</span></h1>
+          <p id="status" class="status">Caricamento…</p>
+        </header>
+
+        <div class="primary">
+          <button id="demo" type="button" class="demo">Sequenza di prova</button>
+          <button id="reset" type="button" class="ghost" title="Rimetti l'avatar di fronte">
+            Riporta di fronte
+          </button>
+        </div>
+
+        <h2>Mosse</h2>
+        <div id="moves" class="grid"></div>
+
+        <h2>Reazioni</h2>
+        <div id="reactions" class="grid"></div>
+
+        <details class="planned">
+          <summary>Repertorio previsto, non ancora realizzato</summary>
+          <ul id="planned"></ul>
+        </details>
+
+        <details class="planned">
+          <summary>Contratto dell'asset: cosa ha riconosciuto il motore</summary>
+          <ul id="diagnostics"></ul>
+        </details>
+
+        <p class="hint">Trascina sull'avatar per ruotarlo.</p>
+      </section>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
