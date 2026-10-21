@@ -220,6 +220,15 @@ Come funziona:
   mondo. Se la texture cambia, si rimisurano quei punti e il resto segue.
 - la superficie è ritagliata dal canale alfa della texture, quindi la sagoma è
   quella disegnata: non serve modellare un contorno;
+- sotto il mento il bordo laterale segue l'estensione dell'incarnato, misurata
+  riga per riga sull'asset (`FACE_EDGE` in `face.ts`). Serve perché il
+  personaggio indossi il **solo maglione**: nella caricatura le punte del
+  colletto della camicia risalgono lungo il collo fino all'altezza della
+  mascella, quindi nessun taglio orizzontale le esclude. Il bordo inferiore
+  cade dove passa la costina del girocollo, che lo copre;
+- `CHIN_Y` regola quanto il corpo sta in basso rispetto alla testa: è
+  l'altezza del mento nel mondo, e la differenza con l'apertura del maglione è
+  il collo che resta scoperto;
 - il materiale si chiama `face` nel GLB; a runtime `AvatarRenderer` gli applica
   la texture e lo rende **non illuminato**, perché luci e ombre sono già
   dipinte. Illuminarlo aggiungerebbe un secondo chiaroscuro.

@@ -1,4 +1,4 @@
-/** Primitive di appoggio per costruire la mesh dell'avatar. */
+/** Primitive di appoggio per costruire il corpo dell'avatar. */
 import * as THREE from 'three';
 
 export type Vec3 = readonly [number, number, number];
@@ -11,24 +11,6 @@ export function ellipsoid(
 ): THREE.BufferGeometry {
   const g = new THREE.SphereGeometry(1, seg[0], seg[1]);
   g.scale(radii[0], radii[1], radii[2]);
-  if (rotation) {
-    g.applyMatrix4(
-      new THREE.Matrix4().makeRotationFromEuler(
-        new THREE.Euler(rotation[0], rotation[1], rotation[2]),
-      ),
-    );
-  }
-  g.translate(center[0], center[1], center[2]);
-  return g;
-}
-
-export function boxAt(
-  center: Vec3,
-  size: Vec3,
-  rotation?: Vec3,
-  seg: Vec3 = [1, 1, 1],
-): THREE.BufferGeometry {
-  const g = new THREE.BoxGeometry(size[0], size[1], size[2], seg[0], seg[1], seg[2]);
   if (rotation) {
     g.applyMatrix4(
       new THREE.Matrix4().makeRotationFromEuler(
@@ -63,28 +45,5 @@ export function tube(
   g.translate(a[0], a[1], a[2]);
   return g;
 }
-
-/** Arco di toro: usato per la bocca e la fascia del colletto. */
-export function arc(
-  center: Vec3,
-  majorRadius: number,
-  tubeRadius: number,
-  arcAngle: number,
-  rotation: Vec3,
-  seg: [number, number] = [8, 24],
-): THREE.BufferGeometry {
-  const g = new THREE.TorusGeometry(majorRadius, tubeRadius, seg[0], seg[1], arcAngle);
-  // Centra l'arco rispetto al proprio asse, così la rotazione resta intuitiva.
-  g.rotateZ(-arcAngle / 2);
-  g.applyMatrix4(
-    new THREE.Matrix4().makeRotationFromEuler(
-      new THREE.Euler(rotation[0], rotation[1], rotation[2]),
-    ),
-  );
-  g.translate(center[0], center[1], center[2]);
-  return g;
-}
-
-
 
 export const deg = (d: number): number => (d * Math.PI) / 180;

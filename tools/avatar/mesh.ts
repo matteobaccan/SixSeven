@@ -13,8 +13,8 @@
 import * as THREE from 'three';
 import { PALETTE, type PaletteKey } from './palette.ts';
 import { BONE_GROUPS, FINGER_IDS, RIG } from './rig.ts';
-import { FACE_CROP, FACE_IMAGE, FACE_LANDMARKS, faceToWorld } from './face.ts';
-import { arc, boxAt, deg, ellipsoid, tube, type Vec3 } from './geometry.ts';
+import { FACE_CROP, FACE_IMAGE, FACE_LANDMARKS, faceSpanAt, faceToWorld } from './face.ts';
+import { deg, ellipsoid, tube, type Vec3 } from './geometry.ts';
 
 export interface Part {
   geometry: THREE.BufferGeometry;
@@ -87,9 +87,13 @@ function faceCard(): Part {
     const v = row / FACE_ROWS;
     const imgY = FACE_CROP.y0 + (FACE_CROP.y1 - FACE_CROP.y0) * v;
 
+    // Sotto il mento la griglia si restringe al collo: lascia fuori le punte
+    // del colletto disegnato senza intaccare il viso.
+    const span = faceSpanAt(imgY);
+
     for (let col = 0; col <= FACE_COLS; col++) {
       const u = col / FACE_COLS;
-      const imgX = FACE_CROP.x0 + (FACE_CROP.x1 - FACE_CROP.x0) * u;
+      const imgX = span.x0 + (span.x1 - span.x0) * u;
 
       const [x, y, z] = faceToWorld({ x: imgX, y: imgY });
       positions.push(x, y, z);
@@ -156,70 +160,6 @@ function head(): Part[] {
 // Busto, maglione e camicia
 // ---------------------------------------------------------------------------
 
-/** Pannello a righe verticali: la camicia senza ricorrere a texture. */
-function stripedPanel(
-  center: Vec3,
-  size: Vec3,
-  rotation: Vec3,
-  bones: readonly string[],
-  count = 9,
-): Part[] {
-  const order: PaletteKey[] = ['shirtWhite', 'shirtBlue', 'shirtWhite', 'shirtPurple'];
-  const w = size[0] / count;
-  const parts: Part[] = [];
-  for (let i = 0; i < count; i++) {
-    const offset = -size[0] / 2 + w * (i + 0.5);
-    const local = new THREE.Vector3(offset, 0, 0).applyEuler(
-      new THREE.Euler(rotation[0], rotation[1], rotation[2]),
-    );
-    parts.push({
-      geometry: boxAt(
-        [center[0] + local.x, center[1] + local.y, center[2] + local.z],
-        [w * 1.06, size[1], size[2]],
-        rotation,
-      ),
-      material: order[i % order.length],
-      bones,
-      power: 6,
-    });
-  }
-  return parts;
-}
-
-/**
- * Righe verticali disposte lungo un anello: la camicia sotto il maglione.
- * Ogni riga è un solido chiuso, così il contorno cartoon non lascia buchi.
- */
-function stripedRing(
-  yBottom: number,
-  yTop: number,
-  radius: number,
-  zScale: number,
-  bones: readonly string[],
-  count = 18,
-): Part[] {
-  const order: PaletteKey[] = ['shirtWhite', 'shirtBlue', 'shirtWhite', 'shirtPurple'];
-  const height = yTop - yBottom;
-  const y = yBottom + height / 2;
-  const width = 2 * radius * Math.sin(Math.PI / count) * 1.08;
-  const parts: Part[] = [];
-
-  for (let i = 0; i < count; i++) {
-    const theta = (i / count) * Math.PI * 2;
-    parts.push({
-      geometry: boxAt(
-        [radius * Math.sin(theta), y, radius * zScale * Math.cos(theta)],
-        [width, height, 0.022],
-        [0, theta, 0],
-      ),
-      material: order[i % order.length],
-      bones,
-      power: 5,
-    });
-  }
-  return parts;
-}
-
 function torso(): Part[] {
   const parts: Part[] = [];
 
@@ -238,12 +178,12 @@ function torso(): Part[] {
     [0.246, 1.14],
     [0.251, 1.196],
     [0.2515, 1.232],
-    [0.2465, 1.266],
-    [0.2335, 1.295],
-    [0.2125, 1.317],
-    [0.183, 1.334],
-    [0.148, 1.3455],
-    [0.129, 1.354],
+    [0.2465, 1.282],
+    [0.2345, 1.322],
+    [0.2145, 1.356],
+    [0.187, 1.384],
+    [0.152, 1.409],
+    [0.132, 1.428],
   ];
   const body = new THREE.LatheGeometry(
     profile.map(([r, y]) => new THREE.Vector2(r, y)),
@@ -258,36 +198,13 @@ function torso(): Part[] {
   hem.scale(1, 1, 0.74);
   parts.push({ geometry: hem, material: 'sweaterRib', bones: BONE_GROUPS.torso, power: 4 });
 
-  // Costina del girocollo attorno all'apertura.
-  const neckRib = new THREE.TorusGeometry(0.129, 0.019, 8, 30);
+  // Costina del girocollo: passa esattamente sul bordo inferiore della
+  // superficie del viso e lo nasconde, al posto di un colletto modellato.
+  const neckRib = new THREE.TorusGeometry(0.132, 0.024, 8, 30);
   neckRib.rotateX(Math.PI / 2);
   neckRib.scale(1, 1, 0.74);
-  neckRib.translate(0, 1.352, 0);
+  neckRib.translate(0, 1.428, 0);
   parts.push({ geometry: neckRib, material: 'sweaterRib', bones: BONE_GROUPS.collar, power: 4 });
-
-  // Camicia a righe: tubo sotto il maglione, visibile nello scollo.
-  parts.push(...stripedRing(1.17, 1.402, 0.118, 0.95, BONE_GROUPS.collar, 14));
-
-  // Punte del colletto, appoggiate sopra il girocollo.
-  for (const s of [1, -1]) {
-    parts.push(
-      ...stripedPanel(
-        [s * 0.112, 1.356, 0.126],
-        [0.128, 0.028, 0.096],
-        [deg(-26), deg(s * -30), deg(s * 10)],
-        BONE_GROUPS.collar,
-        5,
-      ),
-    );
-  }
-
-  // Fascia del colletto dietro al collo.
-  parts.push({
-    geometry: arc([0, 1.398, -0.012], 0.122, 0.024, deg(210), [deg(90), 0, deg(90)], [6, 20]),
-    material: 'shirtWhite',
-    bones: BONE_GROUPS.collar,
-    power: 5,
-  });
 
   return parts;
 }

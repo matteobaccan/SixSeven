@@ -50,7 +50,13 @@ versionabile e diffabile come codice, riproducibile senza dipendenze esterne, e
 modificabile per parametri (un solo numero cambia la proporzione della testa).
 Non è un vincolo: il GLB è un asset sostituibile, vedi `ASSET-CONTRACT.md`.
 
-**2. Viso disegnato, corpo modellato.** Il volto è la caricatura originale
+**2. Solo maglione, niente camicia.** Il colletto modellato in 3D non reggeva
+il confronto con il disegno, e quello *dipinto* nella texture non si può
+escludere con un taglio orizzontale perché le punte risalgono fino alla
+mascella. Il bordo della superficie del viso segue quindi l'incarnato misurato
+riga per riga, e la costina del girocollo copre il taglio.
+
+**2b. Viso disegnato, corpo modellato.** Il volto è la caricatura originale
 applicata come texture a una superficie curva; il corpo è 3D riggato. Il primo
 tentativo modellava anche la testa accostando primitive, e il confronto diretto
 con la caricatura era impietoso: una faccia disegnata non si ottiene con sfere e
@@ -58,7 +64,7 @@ cilindri, perché il naso, gli occhi socchiusi e il tratto sono scelte di
 disegno. Le mani invece devono essere vero 3D, perché le mosse Six Seven sono
 gesti. Dettagli in `ASSET-CONTRACT.md` §9.
 
-**2b. Espressioni facciali con bone, non con shape key.** La specifica ammette
+**2c. Espressioni facciali con bone, non con shape key.** La specifica ammette
 entrambi. I bone (`Jaw`, `Brow_*`, `Eye_*`, `Lid_*`) sono animabili con lo stesso
 meccanismo del resto del corpo e non richiedono un secondo sistema. Sul viso
 texturizzato agiscono per zone di influenza gaussiane, trascinando la pelle
