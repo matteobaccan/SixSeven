@@ -1,0 +1,43 @@
+# Controlli su ogni pull request e su ogni push in main.
+# `npm run build` esegue già, in ordine: generazione dell'avatar, typecheck,
+# check:naming, check:game e bundle. Un solo comando copre tutto.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+
+      # L'avatar è un binario versionato, generato da tools/avatar/.
+      # La build è deterministica: se il GLB ricostruito differisce da quello
+      # nel repository, qualcuno ha modificato i sorgenti senza rigenerarlo.
+      - name: L'avatar versionato è aggiornato
+        run: |
+          if ! git diff --exit-code -- public/assets; then
+            echo "::error::public/assets non corrisponde a 'npm run build:avatar'. Rigenera e committa."
+            exit 1
+          fi
+
+      - name: Nessuna vulnerabilità nelle dipendenze
+        run: npm audit --audit-level=moderate
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+          retention-days: 7

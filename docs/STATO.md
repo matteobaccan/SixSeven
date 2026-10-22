@@ -152,7 +152,16 @@ Noti dal lavoro fatto, da rifinire:
   altri disegni o un volto modellato;
 - la mano chiusa legge come un blocco unico: va separata meglio nelle falangi;
 - le gambe restano lunghe per una proporzione pienamente caricaturale;
-- il GLB pesa circa 750 kB non compresso: con Draco o `meshopt` scende molto.
+- il primo caricamento pesa circa 1,7 MB, e le due voci grosse sono il GLB
+  (1077 kB: 555 di geometria, 362 di animazioni, 160 di JSON) e `face.png`
+  (493 kB). Vanno affrontate in modo diverso: su `avatar.glb` **Draco servirebbe
+  poco**, perché comprime la geometria e qui un terzo del file sono tracce di
+  animazione — serve `meshopt`/`gltfpack`, che le comprime entrambe. Su
+  `face.png` il margine è maggiore e costa meno: l'immagine è disegnata a tinte
+  piatte e si usa solo il ritaglio `FACE_CROP`, quindi ritagliarla in fase di
+  build o passare a WebP la ridurrebbe di molto. Il ritaglio però va in coppia
+  con le UV in `tools/avatar/face.ts`, ed è il punto appena sistemato del
+  contorno: da fare con una verifica visiva accanto.
 
 ## Prossimo passo
 

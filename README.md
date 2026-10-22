@@ -74,6 +74,7 @@ docs/
   SPEC.md                 specifica di progetto 0.1
   STATO.md                cosa è realizzato, decisioni prese e punti aperti
   ASSET-CONTRACT.md       cosa serve per sostituire il modello 3D
+  RILASCIO.md             come viene pubblicato e come si torna indietro
 ```
 
 ## Sostituire il modello 3D
@@ -84,6 +85,15 @@ terze parti con nomi diversi (Mixamo, Rigify, pacchetti CC0) vengono ricondotti
 automaticamente ai nomi canonici.
 All'avvio l'applicazione confronta il modello con il contratto e mostra nel
 pannello cosa ha riconosciuto.
+
+## Pubblicazione
+
+Ogni merge in `main` ricostruisce e pubblica su GitHub Pages, all'indirizzo
+`https://matteobaccan.github.io/SixSeven/`. Telecamera e microfono richiedono
+HTTPS — è una regola del browser, non una scelta del progetto — e quindi in
+locale funzionano solo su `localhost`. Il procedimento completo, la
+preparazione da fare una volta sola e il peso effettivo del primo caricamento
+sono in `docs/RILASCIO.md`.
 
 ## Licenza
 
