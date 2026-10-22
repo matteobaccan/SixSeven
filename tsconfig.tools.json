@@ -11,6 +11,7 @@
   },
   "include": [
     "tools",
+    "vite.config.ts",
     "src/assets/BoneNaming.ts",
     "src/assets/AssetCatalog.ts",
     "src/game/GameStateMachine.ts",

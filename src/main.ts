@@ -20,14 +20,15 @@ import {
 } from './assets/AssetCatalog.ts';
 import { inspectAvatar } from './assets/AvatarContract.ts';
 import { applyBoneNaming } from './assets/BoneNaming.ts';
+import { assetUrl } from './assets/assetUrl.ts';
 import { AURA_MAX, AURA_START, type AuraReason } from './game/Aura.ts';
 import { GameStateMachine, type Intent, type TimerToken, type Timers } from './game/GameStateMachine.ts';
 import { AudioReactionAnalyzer } from './sensors/AudioReactionAnalyzer.ts';
 import { PoseDetector } from './sensors/PoseDetector.ts';
 import { UIController } from './ui/UIController.ts';
 
-const AVATAR_URL = `${import.meta.env.BASE_URL}assets/avatar.glb`;
-const FACE_URL = `${import.meta.env.BASE_URL}assets/face.png`;
+const AVATAR_URL = assetUrl('assets/avatar.glb');
+const FACE_URL = assetUrl('assets/face.png');
 
 /** ID della clip di passaggio del turno, se presente nel modello. */
 const TRANSITION_ID = 'RX-06';

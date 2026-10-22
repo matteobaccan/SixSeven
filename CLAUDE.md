@@ -28,6 +28,19 @@ rigenerarli. La build è deterministica: chi tocca i sorgenti dell'avatar
 rigenera e committa i file nello stesso commit, altrimenti la CI se ne accorge
 e fallisce.
 
+## Risorse statiche
+
+Ogni risorsa caricata a runtime da `public/` passa da `assetUrl()`
+(`src/assets/assetUrl.ts`), che le appende l'impronta del contenuto come
+`?v=`. Niente URL costruite a mano con `import.meta.env.BASE_URL`: Vite mette
+l'impronta nel nome di JS e CSS, ma i file in `public/` li copia col nome
+originale, e senza query un browser che ha in cache il vecchio avatar continua
+a servirlo dopo un rilascio che lo cambia.
+
+Le impronte le calcola il plugin in `vite.config.ts` leggendo `public/`: non
+vanno scritte a mano da nessuna parte. Aggiungere una risorsa significa solo
+metterla in `public/` e chiederla con `assetUrl('percorso/servito')`.
+
 ## Lingua
 
 Codice, commenti, messaggi di commit e documentazione in `docs/` sono in

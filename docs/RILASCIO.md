@@ -81,9 +81,16 @@ comprime: Pages comprime i file di testo, non i binari. Su rete mobile è
 accettabile ma non brillante, e le due voci più pesanti sono entrambe
 riducibili — vedi i punti aperti in `STATO.md`.
 
-Una nota pratica: i file in `public/` vengono serviti **con il nome
-originale**, senza impronta del contenuto, al contrario di JS e CSS che Vite
-rinomina a ogni build. Se un giorno l'avatar cambia, un browser che ha già in
-cache `avatar.glb` può continuare a servire quello vecchio per un po'. Quando
-succederà, la soluzione è cambiare il nome del file o aggiungere una query
-(`avatar.glb?v=2`) nello stesso commit che cambia il modello.
+Una nota sulla cache, perché è un problema che si è già presentato. I file in
+`public/` vengono serviti **con il nome originale**, al contrario di JS e CSS
+che Vite rinomina a ogni build mettendo l'impronta nel nome: un browser che
+aveva in cache il vecchio `avatar.glb` continuava a servirlo dopo un rilascio
+che lo cambiava, e il gioco mostrava le animazioni di ieri senza che niente
+sembrasse rotto.
+
+Ora ogni risorsa statica è chiesta attraverso `assetUrl()`, che le appende
+l'impronta del contenuto come `?v=`; le impronte le calcola il plugin in
+`vite.config.ts` leggendo `public/` in fase di build. È l'impronta del
+contenuto e non la data della build: cambia quando il file cambia davvero,
+quindi un rilascio che non tocca l'avatar non costringe nessuno a riscaricare
+un megabyte.
