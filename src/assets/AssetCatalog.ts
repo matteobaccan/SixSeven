@@ -74,6 +74,33 @@ const ENTRIES: readonly CatalogEntry[] = [
     loop: false,
     timeScale: 1,
   },
+  {
+    id: 'S7-06',
+    name: 'To Di World',
+    kind: 'move',
+    clip: 'ToDiWorld',
+    description: 'Braccio teso al cielo e l’altro piegato: la posa di Usain Bolt.',
+    loop: false,
+    timeScale: 1,
+  },
+  {
+    id: 'S7-07',
+    name: 'Six Foot Seven',
+    kind: 'move',
+    clip: 'SixFootSeven',
+    description: 'La mano piatta che misura in alto: sei piedi e sette, da cui il nome.',
+    loop: false,
+    timeScale: 1,
+  },
+  {
+    id: 'S7-08',
+    name: 'Three Pointer',
+    kind: 'move',
+    clip: 'ThreePointer',
+    description: 'Tiro da tre con la mano che resta sospesa, poi la bilancia.',
+    loop: false,
+    timeScale: 1,
+  },
 
   // --- Reazioni (spec 4.2) ---
   {

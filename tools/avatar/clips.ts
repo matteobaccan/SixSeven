@@ -13,6 +13,9 @@ import {
   fingerSixSeven,
   handshake67,
   reverseWeighing,
+  sixFootSeven,
+  threePointer,
+  toDiWorldMove,
 } from './clips-moves.ts';
 import {
   celebration,
@@ -31,6 +34,9 @@ export function buildClips(): THREE.AnimationClip[] {
     fingerSixSeven(),
     handshake67(),
     extremeSixSeven(),
+    toDiWorldMove(),
+    sixFootSeven(),
+    threePointer(),
     sixSevenFace(),
     taunt(),
     celebration(),

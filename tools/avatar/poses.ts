@@ -53,13 +53,13 @@ export function weigh(lift: number): Pose {
     // Spalla ruotata su Y: il gomito resta al fianco e la mano arriva
     // davanti al petto invece che di lato.
     Shoulder_L: [0, -4, 3 + l * 0.32],
-    UpperArm_L: [-2, -35, -10 - l * 0.12],
-    LowerArm_L: [-118 - l, 68, 4],
+    UpperArm_L: [-38 - l * 0.5, -24, -16 - l * 0.12],
+    LowerArm_L: [-112 - l * 1.4, 68, 4],
     Hand_L: [-4 - l * 0.2, -6, 4],
 
     Shoulder_R: [0, 4, -3 + l * 0.32],
-    UpperArm_R: [-2, 35, 10 - l * 0.12],
-    LowerArm_R: [-118 + l, -68, -4],
+    UpperArm_R: [-38 + l * 0.5, 24, 16 - l * 0.12],
+    LowerArm_R: [-112 + l * 1.4, -68, -4],
     Hand_R: [-4 + l * 0.2, 6, -4],
   };
 }
@@ -146,6 +146,30 @@ export const SPREAD: Pose = sym({
   Pinky1_L: [16, 0, -4],
 });
 
+/** Solo l'indice teso, verso l'alto: serve per indicare il cielo. */
+export const INDEX_ONLY: Pose = sym({
+  Thumb1_L: [0, -30, -46],
+  Thumb2_L: [0, 0, -32],
+  Index1_L: [-6, 0, -2],
+  Index2_L: [0, 0, 0],
+  Middle1_L: [0, 0, -92],
+  Middle2_L: [0, 0, -86],
+  Ring1_L: [4, 0, -94],
+  Ring2_L: [0, 0, -86],
+  Pinky1_L: [8, 0, -92],
+  Pinky2_L: [0, 0, -86],
+});
+
+/** Mano piatta, dita unite: il taglio della mano che misura un'altezza. */
+export const FLAT: Pose = sym({
+  Thumb1_L: [0, -18, -26],
+  Thumb2_L: [0, 0, -16],
+  Index1_L: [-2, 0, -2],
+  Middle1_L: [0, 0, -2],
+  Ring1_L: [2, 0, -2],
+  Pinky1_L: [5, 0, -4],
+});
+
 /** Solo indice e medio tesi, le altre chiuse. */
 export const TWO: Pose = sym({
   Thumb1_L: [0, -30, -48],
@@ -162,8 +186,8 @@ export const TWO: Pose = sym({
 export const OFFER: Pose = {
   ...sym({
     Shoulder_L: [0, -8, 6],
-    UpperArm_L: [-6, -30, -14],
-    LowerArm_L: [-96, 52, 6],
+    UpperArm_L: [-32, -26, -14],
+    LowerArm_L: [-88, 52, 6],
     Hand_L: [-4, -8, 2],
   }),
   ...SPREAD,
