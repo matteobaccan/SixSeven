@@ -5,8 +5,10 @@
  * clip presenti nel GLB. Aggiungere una mossa significa aggiungere una voce qui
  * e una clip nel modello: il motore di gioco non cambia (spec 2.1 punto 9).
  *
- * Le voci con `clip: null` sono dichiarate ma non ancora realizzate: restano
- * visibili come repertorio previsto senza finire nella UI giocabile.
+ * Una voce con `clip: null` è dichiarata ma non ancora realizzata: resta
+ * visibile come repertorio previsto senza finire nella UI giocabile. Lo stesso
+ * vale per una voce la cui clip manca dal modello caricato: il catalogo non
+ * presume che l'asset contenga tutto.
  */
 
 export type EntryKind = 'move' | 'reaction';
@@ -40,7 +42,7 @@ const ENTRIES: readonly CatalogEntry[] = [
     id: 'S7-02',
     name: 'Reverse Weighing',
     kind: 'move',
-    clip: null,
+    clip: 'ReverseWeighing',
     description: 'Variante più ampia, rapida e scomposta della bilancia.',
     loop: false,
     timeScale: 1,
@@ -49,7 +51,7 @@ const ENTRIES: readonly CatalogEntry[] = [
     id: 'S7-03',
     name: 'Finger Six-Seven',
     kind: 'move',
-    clip: null,
+    clip: 'FingerSixSeven',
     description: 'Gesto eseguito con le dita, con pose ben leggibili.',
     loop: false,
     timeScale: 1,
@@ -58,7 +60,7 @@ const ENTRIES: readonly CatalogEntry[] = [
     id: 'S7-04',
     name: '67 Handshake',
     kind: 'move',
-    clip: null,
+    clip: 'Handshake67',
     description: 'La mano tesa al giocatore che diventa una provocazione.',
     loop: false,
     timeScale: 1,
@@ -67,7 +69,7 @@ const ENTRIES: readonly CatalogEntry[] = [
     id: 'S7-05',
     name: 'Extreme Six Seven',
     kind: 'move',
-    clip: null,
+    clip: 'ExtremeSixSeven',
     description: 'Versione caricaturale con braccia, busto e testa esagerati.',
     loop: false,
     timeScale: 1,
@@ -96,7 +98,7 @@ const ENTRIES: readonly CatalogEntry[] = [
     id: 'RX-03',
     name: 'Celebration',
     kind: 'reaction',
-    clip: null,
+    clip: 'Celebration',
     description: 'Reazione festosa in presenza di una forte risposta sonora.',
     loop: false,
     timeScale: 1,
@@ -105,7 +107,7 @@ const ENTRIES: readonly CatalogEntry[] = [
     id: 'RX-04',
     name: 'Disappointed',
     kind: 'reaction',
-    clip: null,
+    clip: 'Disappointed',
     description: 'Reazione ironica in assenza di risposta sonora.',
     loop: false,
     timeScale: 1,
@@ -123,7 +125,7 @@ const ENTRIES: readonly CatalogEntry[] = [
     id: 'RX-06',
     name: 'Turn Transition',
     kind: 'reaction',
-    clip: null,
+    clip: 'TurnTransition',
     description: 'Passaggio tra il turno dell’avatar e quello del giocatore.',
     loop: false,
     timeScale: 1,
