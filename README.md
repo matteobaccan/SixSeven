@@ -1,5 +1,9 @@
 # Six Seven
 
+*[Italiano](README.md) · [English](README.en.md)*
+
+### ▶ [Gioca ora: matteobaccan.github.io/SixSeven](https://matteobaccan.github.io/SixSeven/)
+
 Web app interattiva con avatar 3D: un personaggio cartoon esegue una mossa
 ispirata al meme *Six Seven* e invita il giocatore a replicarla davanti alla
 telecamera.
@@ -13,6 +17,7 @@ della mossa dalla telecamera e reazioni scelte in base al rumore raccolto. Resta
 da provare su dispositivi reali — vedi `docs/STATO.md`.
 
 ![stato](https://img.shields.io/badge/stato-giocabile-40703a)
+![licenza](https://img.shields.io/badge/licenza-MIT-blue)
 
 ## Avvio rapido
 
@@ -38,7 +43,7 @@ periferiche e i turni passano a tempo.
 | `npm run typecheck` | controllo dei tipi (app e tool separati) |
 | `npm run check:naming` | verifica la rimappatura dei nomi dei bone |
 | `npm run check:game` | verifica la logica dei turni, con timer finti |
-| `npm run build` | avatar + typecheck + bundle di produzione in `dist/` |
+| `npm run build` | avatar + typecheck + controlli + bundle di produzione in `dist/` |
 | `npm run preview` | serve il bundle di produzione |
 
 ## Struttura
@@ -88,8 +93,8 @@ pannello cosa ha riconosciuto.
 
 ## Pubblicazione
 
-Ogni merge in `main` ricostruisce e pubblica su GitHub Pages, all'indirizzo
-`https://matteobaccan.github.io/SixSeven/`. Telecamera e microfono richiedono
+Il gioco è online su **<https://matteobaccan.github.io/SixSeven/>**: ogni merge
+in `main` ricostruisce e ripubblica. Telecamera e microfono richiedono
 HTTPS — è una regola del browser, non una scelta del progetto — e quindi in
 locale funzionano solo su `localhost`. Il procedimento completo, la
 preparazione da fare una volta sola e il peso effettivo del primo caricamento
