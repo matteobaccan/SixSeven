@@ -106,7 +106,10 @@ non aveva punteggio, per non trasformare una sfida comica in una gara. L'aura
 lo introduce senza perdere quel registro, perché non misura il giocatore ma una
 risorsa dell'avatar: parte a 60 su 100 e si muove a ogni turno secondo
 l'agitazione rilevata dalla telecamera e l'approvazione del pubblico misurata
-dal microfono. I due esiti sono opposti e voluti — a zero il giocatore ha
+dal microfono. Il passo è di 10 punti, e il valore non è scelto a caso: divide
+esattamente il massimo, così la barra si divide in dieci tacche da un turno
+ciascuna e quanti ne restano si legge a colpo d'occhio invece di doverli
+contare. Una partita dura fra i quattro e gli otto turni. I due esiti sono opposti e voluti — a zero il giocatore ha
 smontato l'avatar e vince, al massimo vuol dire che nessuno ha ribattuto e
 l'avatar se la gode. Il conteggio vive in `src/game/Aura.ts`, separato dalla
 macchina a stati e come quella privo di dipendenze dal browser.
@@ -131,11 +134,31 @@ fondo della scena è crema: sommare luce su un fondo già chiaro satura verso il
 bianco e l'alone spariva del tutto. Con la fusione normale è il colore a
 coprire, e l'alfa della texture a tenerlo morbido ai bordi.
 
-**I gesti alti devono salire in diagonale.** L'inquadratura è tarata sul primo
-piano: un braccio allargato di lato esce dal campo, e la mano con esso. Le pose
-che alzano una mano la portano su in diagonale accompagnata dalla torsione del
-busto, che è ciò che la riporta dentro la sagoma. Vale per `ToDiWorld` e
-`SixFootSeven`, ed è il vincolo da rispettare per le prossime.
+**I gesti alti devono salire in diagonale.** Un braccio allargato di lato esce
+dal campo, e la mano con esso. Le pose che alzano una mano la portano su in
+diagonale accompagnata dalla torsione del busto, che è ciò che la riporta dentro
+la sagoma. Vale per `ToDiWorld` e `SixFootSeven`, ed è il vincolo da rispettare
+per le prossime.
+
+**L'inquadratura si adatta a entrambe le dimensioni, non solo all'altezza.** Il
+`fov` di three è verticale: la larghezza inquadrata vale `altezza × aspect`.
+Fissando solo l'altezza, su schermo stretto — un telefono, e ancora di più il
+browser dentro un'app, che toglie spazio sopra e sotto — le spalle finivano
+fuori campo e nelle mosse i gomiti sparivano del tutto. Ora si calcola la
+distanza necessaria a ciascuna delle due dimensioni e si prende la maggiore.
+
+**Il bordo inferiore è inchiodato all'orlo del maglione.** Quando a comandare è
+la larghezza, in altezza ci sta più del voluto: quell'eccedenza va sopra la
+testa, dove galleggiano la striscia dell'aura e la fascia di stato, non sotto,
+dove scoprirebbe le gambe e aprirebbe un vuoto sotto il personaggio. La soglia
+è una frazione dell'altezza totale, non un valore in metri, perché il modello si
+può sostituire.
+
+**La distanza si misura dal piano del soggetto.** La prima versione sommava
+l'intera profondità del personaggio (`distanza + size.z`), allontanando la
+camera oltre il calcolo: l'inquadratura usciva più alta e più larga del voluto,
+ed era così che ricomparivano le gambe anche dopo aver fissato il bordo
+all'orlo.
 
 **Le animazioni sono ricampionate in fase di build.** glTF trasporta solo
 interpolazione lineare o a gradini: con poche pose il movimento risulta

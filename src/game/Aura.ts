@@ -24,8 +24,14 @@ export type AuraWinner = 'player' | 'avatar';
 export const AURA_MAX = 100;
 /** Valore iniziale: a metà strada, così entrambi gli esiti sono raggiungibili. */
 export const AURA_START = 60;
-/** Spostamento massimo in un turno solo. */
-export const AURA_STEP = 15;
+/**
+ * Spostamento massimo in un turno solo. **Divide esattamente `AURA_MAX`**, e
+ * non è un dettaglio estetico: la barra dell'aura è divisa in tacche da un
+ * passo ciascuna, così quante ne restano da percorrere si legge a colpo
+ * d'occhio invece di dover fare il conto. Cambiarlo con un valore che non
+ * divide il massimo lascerebbe un'ultima tacca tronca.
+ */
+export const AURA_STEP = 10;
 
 /** Peso dell'approvazione del pubblico per livello. */
 const APPROVAL: Record<ReactionLevel, number> = {

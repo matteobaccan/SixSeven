@@ -186,6 +186,7 @@ async function boot(): Promise<void> {
   function handleIntent(intent: Intent): void {
     switch (intent.kind) {
       case 'play':
+        if (intent.entry.kind === 'move') ui.setMove(`${intent.entry.id} · ${intent.entry.name}`);
         void playEntry(intent.entry);
         return;
       case 'idle':
@@ -209,6 +210,7 @@ async function boot(): Promise<void> {
         ui.setAura(intent.value, AURA_NOTE[intent.reason]);
         return;
       case 'match-over':
+        ui.setMove(null);
         ui.showMatchOver(
           intent.winner === 'player' ? 'Hai vinto!' : 'Vince l’avatar',
           intent.winner === 'player'

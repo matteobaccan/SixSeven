@@ -5,7 +5,7 @@
  * Non conosce Three.js né la macchina a stati: riceve stati e voci di catalogo
  * e notifica le scelte dell'utente tramite callback.
  */
-import { AURA_MAX } from '../game/Aura.ts';
+import { AURA_MAX, AURA_STEP } from '../game/Aura.ts';
 import type { CatalogEntry } from '../assets/AssetCatalog.ts';
 import type { AvatarReport } from '../assets/AvatarContract.ts';
 import type { NamingResult } from '../assets/BoneNaming.ts';
@@ -74,6 +74,7 @@ export class UIController {
       'banner',
       'banner-turn',
       'banner-hint',
+      'banner-move',
       'camera',
       'camera-slot',
       'motion-bar',
@@ -90,6 +91,7 @@ export class UIController {
       'fps',
       'aura',
       'aura-value',
+      'aura-track',
       'aura-bar',
       'aura-note',
       'over',
@@ -109,6 +111,10 @@ export class UIController {
     this.el['resume'].addEventListener('click', () => this.callbacks.onResume());
     this.el['reset'].addEventListener('click', () => this.callbacks.onReset());
     this.el['again'].addEventListener('click', () => this.callbacks.onRestart());
+
+    // Una tacca per turno: la larghezza arriva dal passo dell'aura, non da un
+    // numero scritto nel foglio di stile, così i due non possono divergere.
+    this.el['aura-track'].style.setProperty('--notch', `${(AURA_STEP / AURA_MAX) * 100}%`);
   }
 
   // --- Caricamento ---
@@ -160,6 +166,16 @@ export class UIController {
     const canFinish = state === 'PLAYER_READY' || state === 'PLAYER_TURN' || state === 'WAITING_FOR_STILLNESS';
     this.el['done'].classList.toggle('is-hidden', !canFinish);
     this.el['done'].textContent = state === 'PLAYER_READY' ? 'Sono pronto' : 'Ho finito';
+  }
+
+  /**
+   * Nome della mossa in corso. Resta a schermo per tutto il turno del
+   * giocatore, non solo mentre l'avatar la esegue: è l'informazione che serve
+   * proprio nel momento in cui bisogna imitarla.
+   */
+  setMove(label: string | null): void {
+    this.el['banner-move'].textContent = label ?? '';
+    this.el['banner-move'].classList.toggle('is-hidden', label === null);
   }
 
   setOutcome(text: string): void {
