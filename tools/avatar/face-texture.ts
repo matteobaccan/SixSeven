@@ -2,7 +2,8 @@
  * Preparazione della texture del viso.
  *
  * `face-source.png` è la caricatura originale, intatta. Da lì si ricava
- * `public/assets/face.png` uniformando l'incarnato del collo.
+ * `public/assets/face.png` con due interventi circoscritti alla zona del collo:
+ * il colletto della camicia reso trasparente e l'incarnato uniformato.
  *
  * Perché serve: nella caricatura il collo è in ombra sul lato sinistro ed è
  * scuro sotto la mascella, perché sotto c'è il colletto della camicia che
@@ -17,8 +18,22 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { PNG } from 'pngjs';
 
-/** Righe interessate: dal filo della mascella a prima del colletto. */
+/** Righe interessate dall'uniformatura dell'incarnato del collo. */
 const NECK_ROWS = { from: 404, to: 452 } as const;
+
+/**
+ * Righe in cui il colletto della camicia viene reso trasparente.
+ *
+ * Fra il contorno nero della mascella e le punte del colletto c'è una fessura
+ * di *un solo pixel*: con il filtraggio bilineare della texture, qualunque
+ * bordo della superficie pesca comunque il pixel accanto, e sul viso compare
+ * una scheggia di colletto. Inseguire il pixel giusto è una battaglia persa:
+ * si toglie il colletto dalla texture, e il canale alfa fa da sagoma.
+ */
+const COLLAR_ROWS = { from: 378, to: 472 } as const;
+
+/** Ascissa da cui parte la ricerca del tratto di viso: il centro della testa. */
+const HEAD_CENTRE_X = 280;
 
 /** Incarnato in luce, campionato sul collo della caricatura. */
 const LIT = [0xfd, 0xab, 0x7b] as const;
@@ -41,25 +56,49 @@ export function buildFaceTexture(sourcePath: string, outputPath: string): {
   width: number;
   height: number;
   changed: number;
+  erased: number;
 } {
   const png = PNG.sync.read(readFileSync(sourcePath));
   let changed = 0;
+  let erased = 0;
 
+  const isFace = (i: number): boolean =>
+    png.data[i + 3] > 128 &&
+    (isFlesh(png.data[i], png.data[i + 1], png.data[i + 2]) ||
+      isInk(png.data[i], png.data[i + 1], png.data[i + 2]));
+
+  // 1) Colletto via dalla zona della testa. Per ogni riga si cammina dal centro
+  // verso l'esterno finché il viso è contiguo — ammessi stacchi di un paio di
+  // pixel, che sono l'antialiasing del tratto — e tutto ciò che sta oltre
+  // diventa trasparente.
+  for (let y = COLLAR_ROWS.from; y <= COLLAR_ROWS.to && y < png.height; y++) {
+    for (const direction of [-1, 1] as const) {
+      let edge = HEAD_CENTRE_X;
+      let gap = 0;
+      for (let x = HEAD_CENTRE_X; x >= 0 && x < png.width; x += direction) {
+        if (isFace((png.width * y + x) << 2)) {
+          edge = x;
+          gap = 0;
+        } else if (++gap > 3) {
+          break;
+        }
+      }
+      for (let x = edge + direction; x >= 0 && x < png.width; x += direction) {
+        const i = (png.width * y + x) << 2;
+        if (png.data[i + 3] === 0) continue;
+        png.data[i + 3] = 0;
+        erased += 1;
+      }
+    }
+  }
+
+  // 2) Incarnato del collo uniformato (vedi sopra).
   for (let y = NECK_ROWS.from; y <= NECK_ROWS.to && y < png.height; y++) {
-    // Tratti di carne sulla riga. Le linee nere del mento spezzano il collo in
-    // più segmenti: vanno uniformati tutti, non solo il più lungo, altrimenti
-    // restano striature d'ombra fra una linea e l'altra.
     const runs: [number, number][] = [];
     let start: number | null = null;
 
     for (let x = 0; x <= png.width; x++) {
-      const i = (png.width * y + x) << 2;
-      const inside =
-        x < png.width &&
-        png.data[i + 3] > 128 &&
-        (isFlesh(png.data[i], png.data[i + 1], png.data[i + 2]) ||
-          isInk(png.data[i], png.data[i + 1], png.data[i + 2]));
-
+      const inside = x < png.width && isFace((png.width * y + x) << 2);
       if (inside && start === null) start = x;
       if (!inside && start !== null) {
         // I tratti sottili sono contorni del colletto, non collo.
@@ -82,5 +121,5 @@ export function buildFaceTexture(sourcePath: string, outputPath: string): {
   }
 
   writeFileSync(outputPath, PNG.sync.write(png));
-  return { width: png.width, height: png.height, changed };
+  return { width: png.width, height: png.height, changed, erased };
 }

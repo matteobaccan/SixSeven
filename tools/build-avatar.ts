@@ -97,7 +97,9 @@ async function main(): Promise<void> {
   // La texture del viso si ricava dall'originale a ogni build: vedi
   // face-texture.ts per il motivo.
   const face = buildFaceTexture(FACE_SOURCE, FACE_OUTPUT);
-  console.log(`face.png    ${face.width}x${face.height}, ${face.changed} pixel uniformati sul collo`);
+  console.log(
+    `face.png    ${face.width}x${face.height}, ${face.erased} pixel di colletto rimossi, ${face.changed} uniformati sul collo`,
+  );
 
   const { mesh, clips, vertices } = buildAvatar();
 

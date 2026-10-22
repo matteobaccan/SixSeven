@@ -81,11 +81,14 @@ export function faceDepth(x: number): number {
  */
 const FACE_EDGE: readonly (readonly [number, number, number])[] = [
   [0, FACE_CROP.x0, FACE_CROP.x1],
-  [392, FACE_CROP.x0, FACE_CROP.x1],
-  // Sotto la mascella l'estensione resta fissa: a delimitare la testa è
-  // l'arco del mento, non più il bordo laterale.
-  [402, 186, 368],
-  [FACE_CROP.y1, 186, 368],
+  [380, FACE_CROP.x0, FACE_CROP.x1],
+  [390, 160, 403],
+  [398, 165, 397],
+  [406, 170, 390],
+  [414, 171, 383],
+  [422, 173, 375],
+  [430, 174, 366],
+  [FACE_CROP.y1, 176, 362],
 ];
 
 /** Estensione orizzontale della superficie a una data riga dell'immagine. */
@@ -101,16 +104,18 @@ export function faceSpanAt(imgY: number): { x0: number; x1: number } {
 /**
  * Bordo inferiore della testa: il contorno disegnato della mascella.
  *
- * Con la testa staccata dal corpo il bordo inferiore diventa una linea di
- * contorno vera e propria. Non può quindi essere un taglio arbitrario: segue il
- * tratto nero che nella caricatura chiude il mento, misurato colonna per
- * colonna sui pixel dell'asset. Scende fino a y≈466 al centro e risale ai lati,
- * perché il viso è leggermente girato.
+ * Con la testa staccata dal corpo il bordo inferiore è una linea di contorno
+ * vera e propria. Non può quindi essere un taglio arbitrario: segue il tratto
+ * nero che nella caricatura chiude il mento, misurato colonna per colonna.
+ * Scende fino a y≈466 al centro e risale ai lati, perché il viso è leggermente
+ * girato.
  *
  * Le coppie sono (x nell'immagine, ultima riga inclusa).
  */
 const CHIN_EDGE: readonly (readonly [number, number])[] = [
-  [186, 418],
+  [162, 394],
+  [176, 412],
+  [186, 420],
   [205, 434],
   [235, 455],
   [265, 466],
@@ -118,15 +123,22 @@ const CHIN_EDGE: readonly (readonly [number, number])[] = [
   [325, 459],
   [348, 447],
   [368, 430],
+  [382, 416],
+  [401, 392],
 ];
 
-/** Riga dell'immagine su cui finisce la superficie, a una data ascissa relativa. */
-export function chinBottomAt(u: number): number {
-  const x = CHIN_EDGE[0][0] + (CHIN_EDGE[CHIN_EDGE.length - 1][0] - CHIN_EDGE[0][0]) * u;
+/**
+ * Riga dell'immagine su cui finisce la superficie, a una data ascissa.
+ *
+ * Prende la x e non la colonna della griglia: l'estensione delle righe varia
+ * (vedi `FACE_EDGE`), quindi la stessa colonna cade su x diverse a altezze
+ * diverse, e l'arco risulterebbe sfalsato rispetto al disegno.
+ */
+export function chinBottomAt(imgX: number): number {
   let i = 0;
-  while (i < CHIN_EDGE.length - 2 && x > CHIN_EDGE[i + 1][0]) i += 1;
+  while (i < CHIN_EDGE.length - 2 && imgX > CHIN_EDGE[i + 1][0]) i += 1;
   const [xa, ya] = CHIN_EDGE[i];
   const [xb, yb] = CHIN_EDGE[i + 1];
-  const t = xb === xa ? 1 : Math.min(1, Math.max(0, (x - xa) / (xb - xa)));
+  const t = xb === xa ? 1 : Math.min(1, Math.max(0, (imgX - xa) / (xb - xa)));
   return ya + (yb - ya) * t;
 }

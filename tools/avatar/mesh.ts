@@ -103,7 +103,7 @@ function faceCard(): Part {
       const imgX = span.x0 + (span.x1 - span.x0) * u;
       // Il bordo inferiore è un arco: le ultime righe si appoggiano su di esso
       // invece di tagliare dritto.
-      const imgY = Math.min(rowY, chinBottomAt(u));
+      const imgY = Math.min(rowY, chinBottomAt(imgX));
 
       const [x, y, z] = faceToWorld({ x: imgX, y: imgY });
       positions.push(x, y, z);
