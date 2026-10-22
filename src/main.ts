@@ -9,6 +9,7 @@
  */
 import { AnimationController } from './avatar/AnimationController.ts';
 import { AvatarRenderer } from './avatar/AvatarRenderer.ts';
+import { AuraHalo } from './avatar/AuraHalo.ts';
 import { IdleLife } from './avatar/IdleLife.ts';
 import {
   entriesOfKind,
@@ -19,6 +20,7 @@ import {
 } from './assets/AssetCatalog.ts';
 import { inspectAvatar } from './assets/AvatarContract.ts';
 import { applyBoneNaming } from './assets/BoneNaming.ts';
+import { AURA_MAX, AURA_START, type AuraReason } from './game/Aura.ts';
 import { GameStateMachine, type Intent, type TimerToken, type Timers } from './game/GameStateMachine.ts';
 import { AudioReactionAnalyzer } from './sensors/AudioReactionAnalyzer.ts';
 import { PoseDetector } from './sensors/PoseDetector.ts';
@@ -38,6 +40,14 @@ const OUTCOME_TEXT = {
   unknown: 'Senza microfono non si sa com’è andata.',
 } as const;
 
+/** Perché l'aura si è mossa, detto al giocatore in poche parole. */
+const AURA_NOTE: Record<AuraReason, string> = {
+  inattivo: 'Non hai giocato: aura su.',
+  battuto: 'Ha tenuto: aura su.',
+  pari: 'Pari.',
+  superato: 'L’hai superato: aura giù.',
+};
+
 async function boot(): Promise<void> {
   const canvas = document.getElementById('stage') as HTMLCanvasElement | null;
   if (!canvas) throw new Error('Canvas #stage non trovato');
@@ -51,6 +61,10 @@ async function boot(): Promise<void> {
     onResume: () => machine?.send({ type: 'RESUME' }),
     onPlay: (entry) => void freePlay(entry),
     onReset: () => renderer.resetOrientation(),
+    onRestart: () => {
+      ui.hideMatchOver();
+      machine?.send({ type: 'RESTART' });
+    },
   });
 
   const renderer = new AvatarRenderer(canvas, {
@@ -122,10 +136,19 @@ async function boot(): Promise<void> {
 
   // --- Sensori -------------------------------------------------------------
 
+  const halo = new AuraHalo();
+  renderer.addBackdrop(halo.object);
+  halo.snap(AURA_START / AURA_MAX);
+
   const pose = new PoseDetector({
     onMovementStarted: () => machine?.send({ type: 'MOVEMENT_STARTED' }),
     onMovementSettled: () => machine?.send({ type: 'MOVEMENT_SETTLED' }),
-    onMotion: (value) => ui.setMotion(value),
+    onMotion: (value) => {
+      ui.setMotion(value);
+      // La stessa misura serve a due cose: dire al giocatore "ti vedo" e dare
+      // alla macchina l'agitazione su cui si gioca l'aura.
+      machine?.send({ type: 'AGITATION', value });
+    },
   });
   const audio = new AudioReactionAnalyzer();
 
@@ -181,6 +204,18 @@ async function boot(): Promise<void> {
       case 'state':
         ui.setTurn(intent.state, intent.turn);
         return;
+      case 'aura':
+        halo.setRatio(intent.value / AURA_MAX, intent.delta !== 0);
+        ui.setAura(intent.value, AURA_NOTE[intent.reason]);
+        return;
+      case 'match-over':
+        ui.showMatchOver(
+          intent.winner === 'player' ? 'Hai vinto!' : 'Vince l’avatar',
+          intent.winner === 'player'
+            ? `Aura azzerata in ${intent.turns} turni: l’avatar non ha più niente da mostrare.`
+            : `Aura al massimo dopo ${intent.turns} turni: senza qualcuno che ribatta, se la gode.`,
+        );
+        return;
       case 'outcome':
         ui.setOutcome(
           intent.moved === false && pose.available
@@ -223,6 +258,10 @@ async function boot(): Promise<void> {
       timers,
     });
     machine.onIntent(handleIntent);
+    // L'aura si mostra già al via: comparire solo dopo il primo turno
+    // farebbe sembrare che il punteggio nasca dal nulla.
+    ui.setAura(machine.auraValue);
+    halo.snap(machine.auraValue / AURA_MAX);
     machine.send({ type: 'SENSORS', camera, microphone });
     machine.send({ type: 'ASSETS_READY' });
   }
@@ -244,6 +283,7 @@ async function boot(): Promise<void> {
     // Il rumore di fondo si insegue sempre, così al momento del campionamento
     // il riferimento è già pronto (spec 7.2).
     audio.track(dt);
+    halo.update(dt);
 
     frames += 1;
     elapsed += dt;
@@ -267,6 +307,8 @@ async function boot(): Promise<void> {
       life,
       pose,
       audio,
+      halo,
+      ui,
       get machine() {
         return machine;
       },

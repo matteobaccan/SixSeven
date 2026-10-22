@@ -9,7 +9,7 @@ sono state prese e cosa resta aperto.
 | --- | --- |
 | L'avatar 3D è caricato nel browser | sì |
 | Il modello è dotato di uno scheletro utilizzabile | sì, 48 bone |
-| Almeno tre animazioni riproducibili | sì, **undici**: tutto il catalogo |
+| Almeno tre animazioni riproducibili | sì, **quattordici**: otto mosse e sei reazioni |
 | Transizioni senza salti evidenti | sì — ogni clip apre e chiude sulla posa di riposo, con crossfade |
 | Il gioco alterna correttamente i turni | sì |
 | La telecamera consente di stimare la fine della mossa | sì, per differenza fra fotogrammi |
@@ -101,13 +101,41 @@ incognite. Restano minimi assoluti come rete di sicurezza.
 comportamento che richiede meno impalcatura; le sequenze si aggiungono
 sostituendo `pickMove` senza toccare il resto.
 
-**10. Niente punteggio** (punto aperto §12.7). La sfida resta comica: il
-riscontro è la reazione dell'avatar, non un numero.
+**10. Punteggio: l'aura dell'avatar** (punto aperto §12.7). La prima versione
+non aveva punteggio, per non trasformare una sfida comica in una gara. L'aura
+lo introduce senza perdere quel registro, perché non misura il giocatore ma una
+risorsa dell'avatar: parte a 60 su 100 e si muove a ogni turno secondo
+l'agitazione rilevata dalla telecamera e l'approvazione del pubblico misurata
+dal microfono. I due esiti sono opposti e voluti — a zero il giocatore ha
+smontato l'avatar e vince, al massimo vuol dire che nessuno ha ribattuto e
+l'avatar se la gode. Il conteggio vive in `src/game/Aura.ts`, separato dalla
+macchina a stati e come quella privo di dipendenze dal browser.
 
 **11. Niente Rust/WebAssembly**, come indicato dalla specifica (§8.3). Nessun
 collo di bottiglia misurato lo giustifica.
 
 ## Note tecniche non ovvie
+
+**L'immobilità si giudica dall'evento, non dal numero.** L'aura riconosce il
+giocatore che non ha giocato da `movementSeen`, cioè dal fatto che il
+rilevamento abbia dichiarato l'inizio del movimento, non dall'agitazione
+misurata. L'agitazione dice *quanto* è stato ampio il gesto e può non arrivare
+affatto — nessun campione in quel turno, telecamera negata, rilevamento spento —
+e confondere «non misurato» con «fermo» regalerebbe all'avatar il massimo
+dell'aura per un difetto di misura. Per questo l'agitazione è `number | null` e
+non un numero con lo zero come ripiego.
+
+**L'aura non è additiva.** Il primo tentativo usava `AdditiveBlending`, che su
+un fondo scuro è la scelta giusta per qualcosa che rappresenta luce. Qui il
+fondo della scena è crema: sommare luce su un fondo già chiaro satura verso il
+bianco e l'alone spariva del tutto. Con la fusione normale è il colore a
+coprire, e l'alfa della texture a tenerlo morbido ai bordi.
+
+**I gesti alti devono salire in diagonale.** L'inquadratura è tarata sul primo
+piano: un braccio allargato di lato esce dal campo, e la mano con esso. Le pose
+che alzano una mano la portano su in diagonale accompagnata dalla torsione del
+busto, che è ciò che la riporta dentro la sagoma. Vale per `ToDiWorld` e
+`SixFootSeven`, ed è il vincolo da rispettare per le prossime.
 
 **Le animazioni sono ricampionate in fase di build.** glTF trasporta solo
 interpolazione lineare o a gradini: con poche pose il movimento risulta

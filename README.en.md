@@ -12,9 +12,12 @@ The avatar is a hybrid: a **rigged 3D body** — needed for the gestures — and
 **face taken from the original caricature**, applied as a texture to a curved
 surface and animated through influence zones (eyelids, eyebrows, jaw).
 
-**Status: playable.** Eleven animations, alternating turns, end-of-move
+**Status: playable.** Fourteen animations, alternating turns, end-of-move
 detection from the camera, and reactions chosen from how much noise the player
-makes. What remains is testing on real devices — see `docs/STATO.md`.
+makes. The avatar has an **aura**, drawn behind him: it rises or falls each turn
+according to how much the player moves and how loudly the audience approves. At
+zero the player wins; at maximum nobody answered back, and the avatar is
+delighted. What remains is testing on real devices — see `docs/STATO.md`.
 
 ![status](https://img.shields.io/badge/status-playable-40703a)
 ![licence](https://img.shields.io/badge/licence-MIT-blue)
@@ -59,12 +62,14 @@ src/
     ToonLinePass.ts       drawn outlines (edge detection in a post pass)
     AnimationController.ts clip playback and transitions
     IdleLife.ts           continuous micro-motion: blinks, gaze, breathing
+    AuraHalo.ts           the aura drawn behind the character
   assets/
     AssetCatalog.ts       spec IDs -> model clips plus metadata
     AvatarContract.ts     expected bone and clip names, checked against the model
     BoneNaming.ts         name remapping for third-party rigs
   game/
     GameStateMachine.ts   turns and events, with no browser or sensor dependency
+    Aura.ts               the avatar's score and the end-of-match conditions
   sensors/
     PoseDetector.ts       end of move, by frame differencing
     AudioReactionAnalyzer.ts  loudness of the player's reaction
@@ -99,6 +104,14 @@ build time to 32 Hz with per-segment easing, because glTF only carries linear
 interpolation and sparse poses read as mechanical. A procedural layer runs on
 top of whichever clip is playing — blinks, eye saccades, breathing, head drift —
 so it applies to any animation added later, too.
+
+**The aura** is the avatar's own resource, not the player's score. It starts at
+60 out of 100 and moves each turn on two measurements the sensors already make:
+how much the player moved, and how loudly the audience approved. The two endings
+are deliberately opposite — at zero the player has dismantled the avatar and
+wins, at maximum nobody answered back and the avatar revels in it. The counter
+lives in `src/game/Aura.ts`, apart from the state machine and, like it, free of
+browser dependencies.
 
 **The sensors** need no downloaded models and work offline. Motion is measured
 by comparing consecutive frames reduced to a 48×36 grid; audio derives RMS and

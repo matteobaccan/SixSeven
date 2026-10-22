@@ -21,10 +21,27 @@
           <div class="motion"><div id="motion-bar" class="motion-bar"></div></div>
         </div>
 
+        <!-- Aura dell'avatar: a zero vince il giocatore, al massimo l'avatar. -->
+        <div id="aura" class="aura is-hidden">
+          <div class="aura-head">
+            <span class="aura-label">Aura</span>
+            <span id="aura-value" class="aura-value">60</span>
+          </div>
+          <div class="aura-track"><div id="aura-bar" class="aura-bar"></div></div>
+          <p id="aura-note" class="aura-note"></p>
+        </div>
+
         <!-- Fascia di stato del turno. -->
         <div id="banner" class="banner is-hidden">
           <p id="banner-turn" class="banner-turn">Turno 1</p>
           <p id="banner-hint" class="banner-hint"></p>
+        </div>
+
+        <!-- Fine partita. -->
+        <div id="over" class="over is-hidden">
+          <p id="over-title" class="over-title"></p>
+          <p id="over-text" class="over-text"></p>
+          <button id="again" type="button" class="primary-action">Un'altra partita</button>
         </div>
 
         <div id="loader" class="loader">

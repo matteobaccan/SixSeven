@@ -208,6 +208,16 @@ export class AvatarRenderer {
   }
 
   /** Riporta l'avatar all'orientamento frontale. */
+  /**
+   * Aggiunge un oggetto di sfondo: entra in scena ma resta fuori dai contorni.
+   * Serve per l'aura, che è una macchia di luce: un contorno disegnato attorno
+   * la farebbe sembrare un adesivo appiccicato dietro al personaggio.
+   */
+  addBackdrop(object: Object3D): void {
+    this.scene.add(object);
+    this.lines.exclude(object);
+  }
+
   resetOrientation(): void {
     this.pivot.rotation.y = 0;
   }

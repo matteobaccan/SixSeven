@@ -406,3 +406,97 @@ button:focus-visible {
     transition: none;
   }
 }
+
+/* --- Aura dell'avatar --- */
+
+/*
+ * Sta in alto a sinistra: la fascia di stato occupa il centro e il contatore
+ * dei fotogrammi la destra. Compatta, perché l'aura vera è quella disegnata
+ * dietro al personaggio — questa ne è solo la lettura numerica.
+ */
+.aura {
+  position: absolute;
+  left: calc(10px + env(safe-area-inset-left));
+  top: calc(10px + env(safe-area-inset-top));
+  width: 108px;
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 6px 9px 7px;
+  box-shadow: var(--shadow);
+}
+
+.aura-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.aura-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.aura-value {
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-dark);
+}
+
+.aura-track {
+  margin-top: 4px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  overflow: hidden;
+}
+
+.aura-bar {
+  height: 100%;
+  width: 60%;
+  border-radius: 999px;
+  background: var(--accent);
+  transition: width 0.45s ease, background-color 0.45s ease;
+}
+
+.aura-note {
+  margin: 4px 0 0;
+  font-size: 10px;
+  line-height: 1.25;
+  color: var(--ink-soft);
+  min-height: 12px;
+}
+
+/* --- Fine partita --- */
+
+.over {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  text-align: center;
+  background: rgba(244, 239, 230, 0.92);
+  backdrop-filter: blur(2px);
+}
+
+.over-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--accent-dark);
+}
+
+.over-text {
+  margin: 0;
+  max-width: 24ch;
+  font-size: 15px;
+  color: var(--ink-soft);
+}

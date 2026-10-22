@@ -12,9 +12,12 @@ L'avatar è ibrido: **corpo 3D riggato** — serve per i gesti — e **viso dall
 caricatura originale**, applicato come texture a una superficie curva e animato
 per zone di influenza (palpebre, sopracciglia, mandibola).
 
-**Stato: giocabile.** Undici animazioni, turni alternati, rilevamento della fine
-della mossa dalla telecamera e reazioni scelte in base al rumore raccolto. Resta
-da provare su dispositivi reali — vedi `docs/STATO.md`.
+**Stato: giocabile.** Quattordici animazioni, turni alternati, rilevamento della
+fine della mossa dalla telecamera e reazioni scelte in base al rumore raccolto.
+L'avatar ha un'**aura**, disegnata dietro di lui: sale o scende a ogni turno
+secondo quanto si agita il giocatore e quanto lo approva il pubblico. A zero
+vince il giocatore; al massimo nessuno ha ribattuto, e l'avatar se la gode.
+Resta da provare su dispositivi reali — vedi `docs/STATO.md`.
 
 ![stato](https://img.shields.io/badge/stato-giocabile-40703a)
 ![licenza](https://img.shields.io/badge/licenza-MIT-blue)
@@ -55,12 +58,14 @@ src/
     ToonLinePass.ts       contorni disegnati (rilevamento bordi in post)
     AnimationController.ts riproduzione e transizioni delle clip
     IdleLife.ts           micro-movimenti continui: palpebre, sguardo, respiro
+    AuraHalo.ts           l'aura disegnata dietro al personaggio
   assets/
     AssetCatalog.ts       ID della specifica → clip del modello + metadati
     AvatarContract.ts     nomi attesi di bone e clip, con verifica del modello
     BoneNaming.ts         rimappatura dei nomi da rig di terze parti
   game/
     GameStateMachine.ts   turni ed eventi, senza dipendenze da browser o sensori
+    Aura.ts               punteggio dell'avatar e condizioni di fine partita
   sensors/
     PoseDetector.ts       fine della mossa, per differenza fra fotogrammi
     AudioReactionAnalyzer.ts  intensità della reazione sonora

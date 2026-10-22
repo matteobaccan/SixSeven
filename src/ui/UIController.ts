@@ -5,6 +5,7 @@
  * Non conosce Three.js né la macchina a stati: riceve stati e voci di catalogo
  * e notifica le scelte dell'utente tramite callback.
  */
+import { AURA_MAX } from '../game/Aura.ts';
 import type { CatalogEntry } from '../assets/AssetCatalog.ts';
 import type { AvatarReport } from '../assets/AvatarContract.ts';
 import type { NamingResult } from '../assets/BoneNaming.ts';
@@ -19,6 +20,7 @@ export interface UICallbacks {
   /** Riproduzione libera di una voce del repertorio. */
   onPlay: (entry: CatalogEntry) => void;
   onReset: () => void;
+  onRestart: () => void;
 }
 
 /**
@@ -35,8 +37,26 @@ const HINTS: Record<GameState, string> = {
   REACTION_SAMPLING: 'Vediamo…',
   AVATAR_REACTION: 'La risposta',
   NEXT_TURN: 'Prossima mossa',
+  MATCH_OVER: 'Partita finita',
   PAUSED: 'In pausa',
 };
+
+/**
+ * Colore della barra dell'aura, interpolato fra le stesse tre tappe usate
+ * dall'alone in scena (`AuraHalo`): freddo quando l'aura sta finendo, verde a
+ * metà, oro quando l'avatar domina. Tenerle allineate è il motivo per cui sono
+ * scritte come numeri qui e non come variabili CSS.
+ */
+function auraColor(ratio: number): string {
+  const stops: [number, number, number][] = [
+    [0x8f, 0xb0, 0xcc],
+    [0x7f, 0xae, 0x5a],
+    [0xf0, 0xa8, 0x30],
+  ];
+  const [from, to, t] = ratio < 0.5 ? [stops[0], stops[1], ratio * 2] : [stops[1], stops[2], (ratio - 0.5) * 2];
+  const mix = from.map((c, i) => Math.round(c + (to[i] - c) * t));
+  return `rgb(${mix[0]}, ${mix[1]}, ${mix[2]})`;
+}
 
 export class UIController {
   private readonly el: Record<string, HTMLElement> = {};
@@ -68,6 +88,14 @@ export class UIController {
       'diagnostics',
       'reset',
       'fps',
+      'aura',
+      'aura-value',
+      'aura-bar',
+      'aura-note',
+      'over',
+      'over-title',
+      'over-text',
+      'again',
     ]) {
       const node = document.getElementById(id);
       if (!node) throw new Error(`Elemento mancante nel DOM: #${id}`);
@@ -80,6 +108,7 @@ export class UIController {
     this.el['pause'].addEventListener('click', () => this.callbacks.onPause());
     this.el['resume'].addEventListener('click', () => this.callbacks.onResume());
     this.el['reset'].addEventListener('click', () => this.callbacks.onReset());
+    this.el['again'].addEventListener('click', () => this.callbacks.onRestart());
   }
 
   // --- Caricamento ---
@@ -135,6 +164,32 @@ export class UIController {
 
   setOutcome(text: string): void {
     this.el['outcome'].textContent = text;
+  }
+
+  // --- Aura ---
+
+  /**
+   * Mostra l'aura. Il colore della barra segue quello dell'alone in scena, così
+   * il numero e la macchia di luce raccontano la stessa cosa.
+   */
+  setAura(value: number, note = ''): void {
+    const ratio = Math.max(0, Math.min(1, value / AURA_MAX));
+    this.el['aura'].classList.remove('is-hidden');
+    this.el['aura-value'].textContent = String(value);
+    this.el['aura-bar'].style.width = `${Math.round(ratio * 100)}%`;
+    this.el['aura-bar'].style.backgroundColor = auraColor(ratio);
+    this.el['aura-note'].textContent = note;
+  }
+
+  showMatchOver(title: string, text: string): void {
+    this.el['over-title'].textContent = title;
+    this.el['over-text'].textContent = text;
+    this.el['over'].classList.remove('is-hidden');
+    this.el['banner'].classList.add('is-hidden');
+  }
+
+  hideMatchOver(): void {
+    this.el['over'].classList.add('is-hidden');
   }
 
   // --- Sensori ---
