@@ -24,7 +24,7 @@ export const FACE_IMAGE = { width: 540, height: 773 } as const;
  *
  * Il bordo inferiore cade dove passa la costina del girocollo, che lo copre.
  */
-export const FACE_CROP = { x0: 100, x1: 462, y0: 12, y1: 418 } as const;
+export const FACE_CROP = { x0: 100, x1: 462, y0: 12, y1: 467 } as const;
 
 /** Punti misurati sull'immagine. `_L` è la sinistra anatomica del personaggio. */
 export const FACE_LANDMARKS = {
@@ -40,8 +40,12 @@ export const FACE_LANDMARKS = {
 /** Metri per pixel: fissa la larghezza della testa a 0,60 m. */
 export const FACE_SCALE = 0.6 / (FACE_CROP.x1 - FACE_CROP.x0 - 24);
 
-/** Altezza, nel mondo, della riga 430 dell'immagine: la base della mascella. */
-export const CHIN_Y = 1.46;
+/**
+ * Altezza, nel mondo, della riga 430 dell'immagine. Alzandola sale la testa
+ * senza spostare il corpo: insieme all'arco del mento regola la distanza fra i
+ * due.
+ */
+export const CHIN_Y = 1.547;
 
 /** Profondità della superficie al centro e rientro ai bordi (dà volume). */
 export const FACE_Z = 0.09;
@@ -77,9 +81,11 @@ export function faceDepth(x: number): number {
  */
 const FACE_EDGE: readonly (readonly [number, number, number])[] = [
   [0, FACE_CROP.x0, FACE_CROP.x1],
-  [386, FACE_CROP.x0, FACE_CROP.x1],
-  [400, 180, 386],
-  [418, 181, 368],
+  [392, FACE_CROP.x0, FACE_CROP.x1],
+  // Sotto la mascella l'estensione resta fissa: a delimitare la testa è
+  // l'arco del mento, non più il bordo laterale.
+  [402, 186, 368],
+  [FACE_CROP.y1, 186, 368],
 ];
 
 /** Estensione orizzontale della superficie a una data riga dell'immagine. */
@@ -93,16 +99,34 @@ export function faceSpanAt(imgY: number): { x0: number; x1: number } {
 }
 
 /**
- * Bordo inferiore della testa: arco, non taglio dritto.
+ * Bordo inferiore della testa: il contorno disegnato della mascella.
  *
  * Con la testa staccata dal corpo il bordo inferiore diventa una linea di
- * contorno vera e propria, e dritta leggerebbe come una sezione. Curvo — più
- * basso al centro, risalito ai lati — legge come il mento.
+ * contorno vera e propria. Non può quindi essere un taglio arbitrario: segue il
+ * tratto nero che nella caricatura chiude il mento, misurato colonna per
+ * colonna sui pixel dell'asset. Scende fino a y≈466 al centro e risale ai lati,
+ * perché il viso è leggermente girato.
+ *
+ * Le coppie sono (x nell'immagine, ultima riga inclusa).
  */
-const CHIN_EDGE = { centre: FACE_CROP.y1, side: 394 } as const;
+const CHIN_EDGE: readonly (readonly [number, number])[] = [
+  [186, 418],
+  [205, 434],
+  [235, 455],
+  [265, 466],
+  [295, 467],
+  [325, 459],
+  [348, 447],
+  [368, 430],
+];
 
 /** Riga dell'immagine su cui finisce la superficie, a una data ascissa relativa. */
 export function chinBottomAt(u: number): number {
-  const t = Math.abs(2 * u - 1);
-  return CHIN_EDGE.centre - (CHIN_EDGE.centre - CHIN_EDGE.side) * Math.pow(t, 1.6);
+  const x = CHIN_EDGE[0][0] + (CHIN_EDGE[CHIN_EDGE.length - 1][0] - CHIN_EDGE[0][0]) * u;
+  let i = 0;
+  while (i < CHIN_EDGE.length - 2 && x > CHIN_EDGE[i + 1][0]) i += 1;
+  const [xa, ya] = CHIN_EDGE[i];
+  const [xb, yb] = CHIN_EDGE[i + 1];
+  const t = xb === xa ? 1 : Math.min(1, Math.max(0, (x - xa) / (xb - xa)));
+  return ya + (yb - ya) * t;
 }

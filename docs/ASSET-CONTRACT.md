@@ -227,10 +227,12 @@ Come funziona:
   nessun taglio orizzontale le escludeva), l'ombra dipinta sul collo (presente
   su ogni riga, quindi inevitabile spostando il taglio) e la giunzione fra
   disegno e geometria, che a tre quarti si scopriva;
-- il bordo inferiore è un **arco** (`chinBottomAt`), non un taglio dritto: dritto
-  leggerebbe come una sezione, curvo legge come il mento. Il filtro dei bordi gli
-  disegna attorno il contorno, quindi è una linea di disegno a tutti gli
-  effetti;
+- il bordo inferiore (`chinBottomAt`) segue il **contorno nero disegnato della
+  mascella**, misurato colonna per colonna sui pixel dell'asset: scende fino a
+  y≈466 al centro e risale ai lati, perché il viso è leggermente girato. Non può
+  essere un taglio arbitrario, perché con la testa staccata quel bordo è una
+  linea di contorno a tutti gli effetti — il filtro dei bordi gli disegna
+  attorno il tratto;
 - il bordo laterale segue l'estensione dell'incarnato misurata riga per riga
   sull'asset (`FACE_EDGE`);
 - il maglione è **chiuso in cima**: senza il collo a tapparla, l'apertura
