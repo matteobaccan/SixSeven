@@ -101,6 +101,8 @@ export class AvatarRenderer {
   private resizeObserver: ResizeObserver | null = null;
   private detachInspect: (() => void) | null = null;
   private faceTexture: Texture | null = null;
+  /** Soggetto inquadrato: serve a rifare l'inquadratura a ogni resize. */
+  private subject: Object3D | null = null;
 
   constructor(canvas: HTMLCanvasElement, options: RendererOptions = {}) {
     this.canvas = canvas;
@@ -242,6 +244,7 @@ export class AvatarRenderer {
 
     this.applyToonStyle(skinned);
     this.pivot.add(root);
+    this.subject = root;
     this.frameSubject(root);
 
     return { root, clips: gltf.animations, skinned };
@@ -298,9 +301,11 @@ export class AvatarRenderer {
     box.getCenter(center);
 
     const portrait = this.canvas.clientHeight >= this.canvas.clientWidth;
-    // In verticale si privilegia la leggibilità di viso e braccia.
-    const targetY = portrait ? box.max.y - size.y * 0.32 : center.y;
-    const visible = portrait ? size.y * 0.62 : size.y * 1.02;
+    // In verticale si inquadra il mezzo busto: deve starci la testa con un po'
+    // di aria sopra — sotto c'è la fascia di stato — e le mani, che nelle mosse
+    // arrivano davanti al petto.
+    const targetY = portrait ? box.max.y - size.y * 0.28 : center.y;
+    const visible = portrait ? size.y * 0.68 : size.y * 1.02;
     const fov = (this.camera.fov * Math.PI) / 180;
     const distance = visible / 2 / Math.tan(fov / 2);
 
@@ -318,6 +323,10 @@ export class AvatarRenderer {
     this.lines.setSize(width, height, pixelRatio);
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
+    // L'inquadratura va rifatta, non solo al caricamento: al primo calcolo il
+    // canvas può non avere ancora dimensioni, e sul telefono la rotazione
+    // cambia quale delle due inquadrature serve.
+    if (this.subject) this.frameSubject(this.subject);
   };
 
   start(onFrame: (dt: number) => void): void {

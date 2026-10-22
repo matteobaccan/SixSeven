@@ -57,6 +57,11 @@ body {
 }
 
 #stage {
+  /* Ancorato invece che a `height: 100%`: su un flex item l'altezza
+     percentuale non si risolve, e il canvas resterebbe alla sua proporzione
+     predefinita di 2:1 — con l'inquadratura sbagliata di conseguenza. */
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;

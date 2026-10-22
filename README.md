@@ -8,11 +8,11 @@ L'avatar è ibrido: **corpo 3D riggato** — serve per i gesti — e **viso dall
 caricatura originale**, applicato come texture a una superficie curva e animato
 per zone di influenza (palpebre, sopracciglia, mandibola).
 
-**Stato: prototipo Fase 1.** L'avatar 3D è riggato, animato e caricato nel
-browser come GLB. Il ciclo di gioco completo (turni, telecamera, microfono)
-appartiene alle fasi successive — vedi `docs/PHASE1.md`.
+**Stato: giocabile.** Undici animazioni, turni alternati, rilevamento della fine
+della mossa dalla telecamera e reazioni scelte in base al rumore raccolto. Resta
+da provare su dispositivi reali — vedi `docs/STATO.md`.
 
-![stato](https://img.shields.io/badge/fase-1%20prototipo%203D-40703a)
+![stato](https://img.shields.io/badge/stato-giocabile-40703a)
 
 ## Avvio rapido
 
@@ -23,8 +23,11 @@ npm run dev            # http://localhost:5173
 ```
 
 Il GLB è versionato nel repository, quindi `npm run dev` funziona anche senza
-rigenerarlo. Serve HTTPS solo per telecamera e microfono, che in Fase 1 non sono
-ancora usati.
+rigenerarlo.
+
+**Telecamera e microfono richiedono HTTPS** (o `localhost`): è una regola del
+browser, non del gioco. Senza, l'avvio propone comunque di giocare senza
+periferiche e i turni passano a tempo.
 
 ## Script
 
@@ -34,6 +37,7 @@ ancora usati.
 | `npm run build:avatar` | costruisce mesh, scheletro e clip, scrive `public/assets/avatar.glb` |
 | `npm run typecheck` | controllo dei tipi (app e tool separati) |
 | `npm run check:naming` | verifica la rimappatura dei nomi dei bone |
+| `npm run check:game` | verifica la logica dei turni, con timer finti |
 | `npm run build` | avatar + typecheck + bundle di produzione in `dist/` |
 | `npm run preview` | serve il bundle di produzione |
 
@@ -50,8 +54,13 @@ src/
     AssetCatalog.ts       ID della specifica → clip del modello + metadati
     AvatarContract.ts     nomi attesi di bone e clip, con verifica del modello
     BoneNaming.ts         rimappatura dei nomi da rig di terze parti
-  ui/UIController.ts      permessi, comandi, stato, diagnostica
-  main.ts                 collante dei moduli (la macchina a stati arriva in Fase 2)
+  game/
+    GameStateMachine.ts   turni ed eventi, senza dipendenze da browser o sensori
+  sensors/
+    PoseDetector.ts       fine della mossa, per differenza fra fotogrammi
+    AudioReactionAnalyzer.ts  intensità della reazione sonora
+  ui/UIController.ts      permessi, comandi, stato del turno, diagnostica
+  main.ts                 collante: intenti della macchina → moduli concreti
 
 tools/                    pipeline di produzione dell'avatar (non va nel bundle)
   build-avatar.ts         orchestratore: assembla ed esporta il GLB
@@ -63,7 +72,7 @@ tools/                    pipeline di produzione dell'avatar (non va nel bundle)
 
 docs/
   SPEC.md                 specifica di progetto 0.1
-  PHASE1.md               cosa è stato realizzato, decisioni e punti aperti
+  STATO.md                cosa è realizzato, decisioni prese e punti aperti
   ASSET-CONTRACT.md       cosa serve per sostituire il modello 3D
 ```
 
