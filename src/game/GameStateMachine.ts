@@ -162,6 +162,12 @@ export class GameStateMachine {
   private hasCamera = false;
   private hasMicrophone = false;
   private lastMoveId: string | null = null;
+  /**
+   * Mosse già uscite nel giro corrente. Si svuota solo quando il repertorio è
+   * esaurito: dentro una partita una mossa non torna finché non sono uscite
+   * tutte le altre.
+   */
+  private readonly usedMoveIds = new Set<string>();
   private lastReactionId: string | null = null;
   private currentMove: CatalogEntry | null = null;
   private movementSeen = false;
@@ -223,6 +229,7 @@ export class GameStateMachine {
       this.aura.reset();
       this.turnCount = 0;
       this.pendingWinner = null;
+      this.usedMoveIds.clear();
       this.emit({ kind: 'aura', value: this.aura.value, delta: 0, performance: 0, reason: 'pari' });
       this.beginAvatarTurn();
       return;
@@ -401,11 +408,27 @@ export class GameStateMachine {
     else this.emit({ kind: 'idle' });
   }
 
-  /** Mossa a caso, mai due volte di fila se ce n'è più d'una. */
+  /**
+   * Mossa a caso fra quelle non ancora uscite nel giro.
+   *
+   * Non basta evitare la ripetizione immediata: con otto mosse e una partita di
+   * quattro-otto turni, il solo vincolo «mai due volte di fila» lascia
+   * comunque rivedere la stessa mossa tre volte mentre altre non compaiono
+   * mai. Qui il repertorio si consuma come un mazzo: quando è finito si
+   * rimescola, e nel rimescolare si esclude l'ultima uscita, altrimenti il
+   * passaggio da un giro al successivo sarebbe l'unico punto in cui una mossa
+   * può ripetersi di fila.
+   */
   private pickMove(): CatalogEntry {
-    const pool = this.options.moves.filter((m) => m.id !== this.lastMoveId);
-    const from = pool.length > 0 ? pool : this.options.moves;
-    return from[Math.floor(this.random() * from.length) % from.length];
+    let pool = this.options.moves.filter((m) => !this.usedMoveIds.has(m.id));
+    if (pool.length === 0) {
+      this.usedMoveIds.clear();
+      pool = this.options.moves.filter((m) => m.id !== this.lastMoveId);
+      if (pool.length === 0) pool = [...this.options.moves];
+    }
+    const chosen = pool[Math.floor(this.random() * pool.length) % pool.length];
+    this.usedMoveIds.add(chosen.id);
+    return chosen;
   }
 
   /**

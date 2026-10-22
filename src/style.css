@@ -542,3 +542,49 @@ button:focus-visible {
   font-size: 15px;
   color: var(--ink-soft);
 }
+
+/* --- Schermi bassi: il footer deve rubare meno scena --- */
+
+/*
+ * Due criteri in or: poca altezza — il caso peggiore è il browser dentro
+ * un'app, che toglie spazio sopra e sotto — oppure uno schermo da telefono,
+ * dove il pannello va compresso anche quando l'altezza abbonda. Ogni punto
+ * tolto al pannello va all'avatar, che è quello che si deve guardare.
+ *
+ * I bersagli restano comodi: 44 punti è la soglia sotto la quale non si scende,
+ * e la specifica (§9) chiede pulsanti grandi perché a giocare sono anche i
+ * bambini.
+ */
+@media (max-height: 760px), (max-width: 480px) {
+  .panel {
+    padding: 8px 12px calc(10px + env(safe-area-inset-bottom));
+    gap: 6px;
+  }
+
+  .panel button {
+    min-height: 44px;
+    padding: 10px 14px;
+  }
+
+  .primary-action {
+    font-size: 16px;
+  }
+
+  /* Una riga sola: il riepilogo del turno non deve mandare a capo il pannello. */
+  .outcome {
+    min-height: 1.15em;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .extra {
+    padding-top: 5px;
+  }
+
+  .extra summary {
+    min-height: 26px;
+    font-size: 12px;
+  }
+}
