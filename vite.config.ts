@@ -11,7 +11,7 @@ export default defineConfig({
     // il bundle di rendering completo (requisito non funzionale "prestazioni").
     rollupOptions: {
       output: {
-        manualChunks: { three: ['three'] },
+        manualChunks: (id) => (id.includes('node_modules/three/') ? 'three' : undefined),
       },
     },
   },
