@@ -13,7 +13,8 @@
     "tools",
     "src/assets/BoneNaming.ts",
     "src/assets/AssetCatalog.ts",
-    "src/game/GameStateMachine.ts"
+    "src/game/GameStateMachine.ts",
+    "src/game/Aura.ts"
   ],
   "_comment": "I moduli di src elencati sono senza dipendenze dal DOM: il motore li usa a runtime, i tool li verificano."
 }

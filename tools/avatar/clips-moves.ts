@@ -10,7 +10,18 @@
  */
 import type * as THREE from 'three';
 import { compileClip } from './timeline.ts';
-import { FIST, OFFER, oneSide, OPEN_FINGERS, SPREAD, TWO, weigh, weighKey } from './poses.ts';
+import {
+  FIST,
+  FLAT,
+  INDEX_ONLY,
+  OFFER,
+  oneSide,
+  OPEN_FINGERS,
+  SPREAD,
+  TWO,
+  weigh,
+  weighKey,
+} from './poses.ts';
 import { sym, type Pose } from './timeline.ts';
 
 export const classicWeighing = (): THREE.AnimationClip =>
@@ -106,8 +117,8 @@ const FINGERS_UP: Pose = sym({
   Chest: [-3, 0, 0],
   Neck: [3, 0, 0],
   Shoulder_L: [0, -5, 8],
-  UpperArm_L: [-10, -32, -16],
-  LowerArm_L: [-112, 34, 6],
+  UpperArm_L: [-42, -22, -18],
+  LowerArm_L: [-104, 34, 6],
   Hand_L: [-4, -6, 2],
 });
 
@@ -227,8 +238,8 @@ export const handshake67 = (): THREE.AnimationClip =>
         Brow_L: [-16, 0, 0],
         Jaw: [6, 0, 0],
         Shoulder_L: [0, 0, 16],
-        UpperArm_L: [4, -28, -12],
-        LowerArm_L: [-86, 62, 6],
+        UpperArm_L: [-30, -22, -14],
+        LowerArm_L: [-84, 62, 6],
         Hand_L: [-6, -10, 4],
         ...OPEN_FINGERS,
       }),
@@ -260,13 +271,13 @@ function extreme(lift: number): Pose {
     Eye_R: [0, -l * 0.2, 0],
 
     Shoulder_L: [0, -6, 6 + l * 0.5],
-    UpperArm_L: [-6 - l * 0.5, -28, -8 - l * 0.3],
-    LowerArm_L: [-104 - l * 1.3, 62, 8],
+    UpperArm_L: [-36 - l * 0.6, -20, -14 - l * 0.3],
+    LowerArm_L: [-100 - l * 1.3, 62, 8],
     Hand_L: [-6 - l * 0.3, -8, 6],
 
     Shoulder_R: [0, 6, -6 + l * 0.5],
-    UpperArm_R: [-6 + l * 0.5, 28, 8 - l * 0.3],
-    LowerArm_R: [-104 + l * 1.3, -62, -8],
+    UpperArm_R: [-36 + l * 0.6, 20, 14 - l * 0.3],
+    LowerArm_R: [-100 + l * 1.3, -62, -8],
     Hand_R: [-6 + l * 0.3, 8, -6],
   };
 }
@@ -312,4 +323,204 @@ export const extremeSixSeven = (): THREE.AnimationClip =>
     { t: 2.62, pose: { ...extreme(0), Jaw: [12, 0, 0], Brow_L: [10, 0, 0], Brow_R: [10, 0, 0] }, hips: [0, 0.02, 0.015] },
     { t: 3.0, pose: sym({ UpperArm_L: [2, -16, -6], LowerArm_L: [-34, 24, 3], Jaw: [4, 0, 0] }), ease: 'in' },
     { t: 3.45, pose: {} },
+  ]);
+
+
+// ---------------------------------------------------------------------------
+// S7-06 To Di World — il braccio teso al cielo
+// ---------------------------------------------------------------------------
+
+/**
+ * La posa di Usain Bolt, di origine dancehall: un braccio punta in alto e di
+ * lato, l'altro resta piegato davanti al petto come chi tende un arco. Il
+ * `reach` porta più in alto il braccio teso e accompagna la testa.
+ */
+function toDiWorld(reach: number): Pose {
+  return {
+    ...INDEX_ONLY,
+    Hips: [0, -6, 2],
+    Spine: [-4, -5, 7],
+    Chest: [-7, -8, 10],
+    Neck: [-4, 7, -6],
+    Head: [-9 - reach * 0.1, 11, -9],
+    Jaw: [7, 0, 0],
+    Brow_L: [-21, 0, 0],
+    Brow_R: [-21, 0, 0],
+    Eye_L: [-7, 9, 0],
+    Eye_R: [-7, 9, 0],
+
+    // Braccio che punta: abdotto quasi in verticale, gomito quasi disteso.
+    Shoulder_L: [0, 0, 20],
+    UpperArm_L: [-12, -6, 80 + reach * 0.22],
+    LowerArm_L: [-16, 12, 4],
+    Hand_L: [-10, 0, 6],
+
+    // Braccio dell'arco: piegato davanti al petto, pugno chiuso.
+    Shoulder_R: [0, 6, 10],
+    UpperArm_R: [-36, 24, 24],
+    LowerArm_R: [-116, -38, -6],
+    Hand_R: [-6, 12, -4],
+    ...oneSide(FIST, 'R'),
+  };
+}
+
+export const toDiWorldMove = (): THREE.AnimationClip =>
+  compileClip('ToDiWorld', [
+    { t: 0, pose: {} },
+    // Carica: si raccoglie e abbassa le spalle prima di scattare.
+    {
+      t: 0.24,
+      pose: sym({
+        Spine: [6, 0, 0],
+        Chest: [8, 0, 0],
+        Neck: [-5, 0, 0],
+        Head: [-7, 0, 0],
+        Shoulder_L: [0, 0, -9],
+        UpperArm_L: [-4, -8, -6],
+        LowerArm_L: [-16, 10, 0],
+        Brow_L: [7, 0, 0],
+      }),
+      hips: [0, -0.04, -0.01],
+      ease: 'out',
+    },
+    // Scatto nella posa, con scavalcamento: il braccio supera e rientra.
+    { t: 0.62, pose: toDiWorld(40), hips: [0, 0.03, 0], ease: 'overshoot' },
+    { t: 0.9, pose: toDiWorld(0), hips: [0, 0.02, 0] },
+    // Tenuta: è il fermo immagine della mossa, e deve durare.
+    { t: 1.5, pose: toDiWorld(6), hips: [0, 0.022, 0] },
+    { t: 2.1, pose: toDiWorld(0), hips: [0, 0.02, 0] },
+    // Doppio rilancio del braccio, come nella posa originale.
+    { t: 2.42, pose: toDiWorld(30), hips: [0, 0.03, 0], ease: 'overshoot' },
+    { t: 2.78, pose: toDiWorld(4), hips: [0, 0.02, 0], ease: 'out' },
+    { t: 3.2, pose: sym({ UpperArm_L: [2, -14, 6], LowerArm_L: [-30, 18, 3] }), ease: 'in' },
+    { t: 3.6, pose: {} },
+  ]);
+
+// ---------------------------------------------------------------------------
+// S7-07 Six Foot Seven — l'altezza misurata con la mano
+// ---------------------------------------------------------------------------
+
+/**
+ * Il numero del meme nasce da un'altezza: sei piedi e sette pollici, due metri
+ * e uno. La mano piatta che misura sopra la testa è il gesto che la racconta.
+ */
+function heightCheck(raise: number): Pose {
+  return {
+    ...FLAT,
+    Hips: [0, -5, 2],
+    Spine: [-4, -5, 6],
+    Chest: [-6, -8, 9],
+    Neck: [-5, 5, -4],
+    Head: [-15 - raise * 0.14, 8, -6],
+    Jaw: [5, 0, 0],
+    Brow_L: [-19 - raise * 0.1, 0, 0],
+    Brow_R: [-19 - raise * 0.1, 0, 0],
+    Eye_L: [-10, 8, 0],
+    Eye_R: [-10, 8, 0],
+
+    // Il braccio sale in diagonale, dentro la sagoma: di lato uscirebbe
+    // dall'inquadratura, che è tarata sul primo piano. La mano resta piatta e
+    // orizzontale sopra il capo, è lei a dare la misura.
+    Shoulder_L: [0, 0, 20],
+    UpperArm_L: [-12, -6, 96 + raise * 0.3],
+    LowerArm_L: [-16, 16, 2],
+    Hand_L: [16, -12, -36],
+
+    // L'altra mano resta al fianco, chiusa.
+    Shoulder_R: [0, 4, 6],
+    UpperArm_R: [-16, 28, 14],
+    LowerArm_R: [-80, -52, -4],
+    Hand_R: [-4, 8, -4],
+    ...oneSide(FIST, 'R'),
+  };
+}
+
+export const sixFootSeven = (): THREE.AnimationClip =>
+  compileClip('SixFootSeven', [
+    { t: 0, pose: {} },
+    { t: 0.2, pose: sym({ Chest: [4, 0, 0], Shoulder_L: [0, 0, -7] }), hips: [0, -0.018, 0], ease: 'out' },
+    // La mano sale e si ferma sopra la testa.
+    { t: 0.6, pose: heightCheck(18), ease: 'overshoot' },
+    { t: 0.9, pose: heightCheck(0), ease: 'out' },
+    // Due colpetti verso il basso: sta prendendo la misura.
+    { t: 1.18, pose: heightCheck(-14) },
+    { t: 1.42, pose: heightCheck(8) },
+    { t: 1.66, pose: heightCheck(-10) },
+    // Si ferma sulla misura e guarda il giocatore dall'alto.
+    { t: 2.0, pose: { ...heightCheck(0), Head: [-10, 9, -5], Eye_L: [-4, 10, 0], Eye_R: [-4, 10, 0] } },
+    { t: 2.5, pose: { ...heightCheck(2), Head: [-10, 9, -5], Jaw: [8, 0, 0], Eye_L: [-4, 10, 0], Eye_R: [-4, 10, 0] } },
+    { t: 2.9, pose: sym({ UpperArm_L: [2, -12, 10], LowerArm_L: [-34, 14, 2] }), ease: 'in' },
+    { t: 3.3, pose: {} },
+  ]);
+
+// ---------------------------------------------------------------------------
+// S7-08 Three Pointer — il tiro da tre, poi il gesto
+// ---------------------------------------------------------------------------
+
+/** Mani che reggono il pallone sopra la spalla, prima del rilascio. */
+const SHOT_LOAD: Pose = {
+  ...SPREAD,
+  Spine: [5, 0, 0],
+  Chest: [6, -4, 0],
+  Neck: [-4, 0, 0],
+  Head: [-6, 4, -2],
+  Brow_L: [-14, 0, 0],
+  Brow_R: [-14, 0, 0],
+
+  Shoulder_L: [0, -4, 16],
+  UpperArm_L: [-46, -18, 34],
+  LowerArm_L: [-126, 46, 8],
+  Hand_L: [-18, -8, 4],
+
+  Shoulder_R: [0, 8, 6],
+  UpperArm_R: [-30, 30, 18],
+  LowerArm_R: [-118, -50, -6],
+  Hand_R: [-14, 10, -6],
+};
+
+/** Rilascio: il braccio si distende verso l'alto e il polso ricade. */
+const SHOT_RELEASE: Pose = {
+  ...SPREAD,
+  Spine: [-5, 0, 0],
+  Chest: [-8, -3, 0],
+  Neck: [-6, 0, 0],
+  Head: [-14, 3, -2],
+  Jaw: [6, 0, 0],
+  Brow_L: [-20, 0, 0],
+  Brow_R: [-20, 0, 0],
+  Eye_L: [-10, 0, 0],
+  Eye_R: [-10, 0, 0],
+
+  // Braccio del tiro quasi verticale, polso abbandonato in avanti.
+  Shoulder_L: [0, -4, 22],
+  UpperArm_L: [-20, -10, 80],
+  LowerArm_L: [-26, 20, 4],
+  Hand_L: [-42, -6, 4],
+
+  // L'altra mano accompagna e resta più bassa.
+  Shoulder_R: [0, 6, 12],
+  UpperArm_R: [-26, 26, 34],
+  LowerArm_R: [-84, -46, -6],
+  Hand_R: [-10, 10, -6],
+};
+
+export const threePointer = (): THREE.AnimationClip =>
+  compileClip('ThreePointer', [
+    { t: 0, pose: {} },
+    // Piega le gambe e carica il tiro.
+    { t: 0.26, pose: SHOT_LOAD, hips: [0, -0.05, 0], ease: 'out' },
+    { t: 0.5, pose: SHOT_LOAD, hips: [0, -0.055, 0] },
+    // Rilascio: sale sulle punte, il corpo si distende.
+    { t: 0.78, pose: SHOT_RELEASE, hips: [0, 0.055, 0.01], ease: 'overshoot' },
+    // Resta "nel canestro": il tiratore che non abbassa il braccio.
+    { t: 1.25, pose: SHOT_RELEASE, hips: [0, 0.03, 0.008] },
+    // Poi le mani cadono nella bilancia: il gesto arriva dopo il canestro.
+    { t: 1.7, pose: weigh(0), hips: [0, 0, 0], ease: 'out' },
+    weighKey(2.02, 26),
+    weighKey(2.34, -26),
+    weighKey(2.66, 22),
+    { ...weighKey(2.98, 0), ease: 'out' },
+    { t: 3.3, pose: weigh(0) },
+    { t: 3.62, pose: sym({ UpperArm_L: [2, -16, -5], LowerArm_L: [-34, 24, 3] }), ease: 'in' },
+    { t: 4.0, pose: {} },
   ]);

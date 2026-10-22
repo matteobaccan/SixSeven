@@ -17,6 +17,7 @@ import {
   type Timers,
 } from '../src/game/GameStateMachine.ts';
 import { entriesOfKind, getEntry, IDLE_ID } from '../src/assets/AssetCatalog.ts';
+import { AURA_MAX, AURA_START, AURA_STEP, AuraMeter } from '../src/game/Aura.ts';
 
 let failures = 0;
 
@@ -54,6 +55,9 @@ const ALL_CLIPS = [
   'FingerSixSeven',
   'Handshake67',
   'ExtremeSixSeven',
+  'ToDiWorld',
+  'SixFootSeven',
+  'ThreePointer',
   'SixSevenFace',
   'Taunt',
   'Celebration',
@@ -279,6 +283,108 @@ console.log('Venti turni di fila: nessuna mossa ripetuta, nessuno stato inatteso
   expect(repeats, 0, 'nessuna mossa due volte di fila');
   expect(h.machine.turn, 21, 'ventuno turni contati');
   expect(h.machine.state, 'AVATAR_TURN', 'stato coerente alla fine');
+}
+
+console.log('Aura: il conteggio da solo');
+{
+  const aura = new AuraMeter();
+  expect(aura.value, AURA_START, 'parte dal valore iniziale');
+
+  // Giocatore che se la cava: agitazione piena e pubblico entusiasta.
+  const bravo = aura.apply({ agitation: 1, approval: 'high', watched: true, moved: true });
+  expect(bravo.delta, -AURA_STEP, 'una resa piena toglie il massimo');
+  expect(bravo.reason, 'superato', 'motivo coerente');
+  expect(bravo.winner, null, 'un turno solo non chiude la partita');
+
+  // Fermo davanti alla telecamera: non ha giocato, qualunque cosa dica l'audio.
+  const fermo = new AuraMeter();
+  const pigro = fermo.apply({ agitation: 1, approval: 'high', watched: true, moved: false });
+  expect(pigro.delta, AURA_STEP, 'chi non si muove regala il massimo all’avatar');
+  expect(pigro.reason, 'inattivo', 'riconosciuto come inattivo');
+
+  // Senza telecamera conta solo il pubblico: l'agitazione non è misurabile.
+  const alCieco = new AuraMeter();
+  alCieco.apply({ agitation: null, approval: 'high', watched: false, moved: false });
+  expect(alCieco.value, AURA_START - AURA_STEP, 'senza telecamera decide il pubblico');
+
+  // Estremi: non si esce mai dall'intervallo.
+  const basso = new AuraMeter(4);
+  const sotto = basso.apply({ agitation: 1, approval: 'high', watched: true, moved: true });
+  expect(sotto.value, 0, 'non scende sotto zero');
+  expect(sotto.winner, 'player', 'a zero vince il giocatore');
+
+  const alto = new AuraMeter(AURA_MAX - 4);
+  const sopra = alto.apply({ agitation: 0, approval: 'low', watched: true, moved: false });
+  expect(sopra.value, AURA_MAX, 'non supera il massimo');
+  expect(sopra.winner, 'avatar', 'al massimo vince l’avatar');
+}
+
+console.log('Aura: il giocatore la azzera e vince');
+{
+  const h = harness();
+  h.machine.send({ type: 'ASSETS_READY' });
+
+  let turns = 0;
+  while (h.machine.state !== 'MATCH_OVER' && turns < 12) {
+    turns += 1;
+    h.machine.send({ type: 'CLIP_FINISHED' });
+    h.fire('invitation');
+    h.machine.send({ type: 'MOVEMENT_STARTED' });
+    h.machine.send({ type: 'AGITATION', value: 1 });
+    h.machine.send({ type: 'MOVEMENT_SETTLED' });
+    h.machine.send({ type: 'AUDIO_RESULT', level: 'high' });
+    h.machine.send({ type: 'CLIP_FINISHED' });
+    if (h.machine.state === 'NEXT_TURN') h.fire('next-turn');
+  }
+
+  expect(h.machine.state, 'MATCH_OVER', 'la partita è finita');
+  expect(h.machine.auraValue, 0, 'aura azzerata');
+  expect(turns, Math.ceil(AURA_START / AURA_STEP), 'nel numero di turni previsto dal passo');
+  const over = h.intents.find((i) => i.kind === 'match-over');
+  expect(over && over.kind === 'match-over' ? over.winner : null, 'player', 'vince il giocatore');
+  expect(h.played[h.played.length - 1], 'RX-04', 'chiude con la reazione delusa');
+  expect(h.timers.pending.size, 0, 'nessun timer resta appeso');
+}
+
+console.log('Aura: il giocatore non gioca e l’avatar se la gode');
+{
+  const h = harness();
+  h.machine.send({ type: 'ASSETS_READY' });
+
+  let turns = 0;
+  while (h.machine.state !== 'MATCH_OVER' && turns < 12) {
+    turns += 1;
+    h.machine.send({ type: 'CLIP_FINISHED' });
+    h.fire('invitation');
+    // Nessun movimento: il turno scade da solo.
+    h.fire('player-turn');
+    h.machine.send({ type: 'AUDIO_RESULT', level: 'low' });
+    h.machine.send({ type: 'CLIP_FINISHED' });
+    if (h.machine.state === 'NEXT_TURN') h.fire('next-turn');
+  }
+
+  expect(h.machine.state, 'MATCH_OVER', 'la partita è finita');
+  expect(h.machine.auraValue, AURA_MAX, 'aura al massimo');
+  const over = h.intents.find((i) => i.kind === 'match-over');
+  expect(over && over.kind === 'match-over' ? over.winner : null, 'avatar', 'vince l’avatar');
+  expect(h.played[h.played.length - 1], 'RX-03', 'chiude festeggiando');
+
+  // E si può ricominciare.
+  h.machine.send({ type: 'RESTART' });
+  expect(h.machine.state, 'AVATAR_TURN', 'riparte dal turno dell’avatar');
+  expect(h.machine.auraValue, AURA_START, 'aura riportata al valore iniziale');
+  expect(h.machine.turn, 1, 'conteggio dei turni azzerato');
+}
+
+console.log('Aura: durante la pausa non si muove');
+{
+  const h = harness();
+  h.machine.send({ type: 'ASSETS_READY' });
+  const before = h.machine.auraValue;
+  h.machine.send({ type: 'PAUSE' });
+  h.machine.send({ type: 'AGITATION', value: 1 });
+  h.machine.send({ type: 'RESUME' });
+  expect(h.machine.auraValue, before, 'la pausa non cambia l’aura');
 }
 
 console.log(failures === 0 ? '\nTutti i controlli superati.' : `\n${failures} controlli falliti.`);

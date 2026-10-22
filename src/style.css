@@ -123,7 +123,7 @@ body {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  top: calc(10px + env(safe-area-inset-top));
+  top: calc(10px + env(safe-area-inset-top) + 36px);
   text-align: center;
   background: rgba(255, 255, 255, 0.86);
   border: 1px solid var(--line);
@@ -145,6 +145,13 @@ body {
   margin: 1px 0 0;
   font-size: 16px;
   font-weight: 600;
+}
+
+/* Nome della mossa in corso: resta finché il giocatore deve imitarla. */
+.banner-move {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--ink-soft);
 }
 
 /* --- Caricamento e schermata iniziale --- */
@@ -405,4 +412,133 @@ button:focus-visible {
   .motion-bar {
     transition: none;
   }
+}
+
+/* --- Aura dell'avatar --- */
+
+/*
+ * Striscia sottile a tutta larghezza, in cima alla scena, con la fascia di
+ * stato subito sotto. Era un riquadro in alto a sinistra, ma la fascia è
+ * centrata e su un telefono da 390 punti le due cose si sovrapponevano — e
+ * continuerebbero a farlo a ogni nome di mossa più lungo. A tutta larghezza il
+ * problema non si pone per costruzione.
+ *
+ * L'aura vera è quella disegnata dietro al personaggio: questa ne è la lettura
+ * numerica, e sta volutamente bassa di contrasto.
+ */
+.aura {
+  position: absolute;
+  left: calc(10px + env(safe-area-inset-left));
+  right: calc(10px + env(safe-area-inset-right));
+  top: calc(10px + env(safe-area-inset-top));
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 12px;
+  box-shadow: var(--shadow);
+}
+
+.aura-head {
+  display: contents;
+}
+
+.aura-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.aura-value {
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-dark);
+}
+
+.aura-track {
+  position: relative;
+  flex: 1;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  overflow: hidden;
+}
+
+/*
+ * Tacche da un turno ciascuna. `--notch` arriva da UIController, calcolato su
+ * AURA_STEP / AURA_MAX: tenerlo lì invece che scritto qui è ciò che impedisce
+ * ai due valori di divergere quando si ritara il passo.
+ */
+.aura-track::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to right,
+    transparent 0,
+    transparent calc(var(--notch, 10%) - 1px),
+    var(--panel) calc(var(--notch, 10%) - 1px),
+    var(--panel) var(--notch, 10%)
+  );
+}
+
+.aura-bar {
+  height: 100%;
+  width: 60%;
+  border-radius: 999px;
+  background: var(--accent);
+  transition: width 0.45s ease, background-color 0.45s ease;
+}
+
+/*
+ * Il perché dello spostamento. Su schermo stretto sparisce: nella striscia non
+ * c'è spazio, e l'informazione è comunque ridondante — il colore e le tacche
+ * dicono già come sta andando.
+ */
+.aura-note {
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.2;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+@media (max-width: 430px) {
+  .aura-note {
+    display: none;
+  }
+}
+
+/* --- Fine partita --- */
+
+.over {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  text-align: center;
+  background: rgba(244, 239, 230, 0.92);
+  backdrop-filter: blur(2px);
+}
+
+.over-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--accent-dark);
+}
+
+.over-text {
+  margin: 0;
+  max-width: 24ch;
+  font-size: 15px;
+  color: var(--ink-soft);
 }

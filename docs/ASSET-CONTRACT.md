@@ -120,13 +120,16 @@ Le clip vanno **dentro il GLB**, con questi nomi esatti:
 | S7-01 | `ClassicWeighing` | realizzata | la bilancia |
 | RX-02 | `Taunt` | realizzata | provocazione |
 | RX-01 | `SixSevenFace` | realizzata | smorfia |
-| S7-02 | `ReverseWeighing` | da fare | |
-| S7-03 | `FingerSixSeven` | da fare | richiede le dita |
-| S7-04 | `Handshake67` | da fare | |
-| S7-05 | `ExtremeSixSeven` | da fare | |
-| RX-03 | `Celebration` | da fare | |
-| RX-04 | `Disappointed` | da fare | |
-| RX-06 | `TurnTransition` | da fare | |
+| S7-02 | `ReverseWeighing` | realizzata | la bilancia scomposta |
+| S7-03 | `FingerSixSeven` | realizzata | richiede le dita |
+| S7-04 | `Handshake67` | realizzata | la mano tesa e ritirata |
+| S7-05 | `ExtremeSixSeven` | realizzata | tutto il corpo |
+| S7-06 | `ToDiWorld` | realizzata | braccio teso al cielo |
+| S7-07 | `SixFootSeven` | realizzata | la mano che misura l'altezza |
+| S7-08 | `ThreePointer` | realizzata | tiro da tre, poi la bilancia |
+| RX-03 | `Celebration` | realizzata | |
+| RX-04 | `Disappointed` | realizzata | |
+| RX-06 | `TurnTransition` | realizzata | |
 
 I nomi non realizzati sono già previsti in `src/assets/AssetCatalog.ts`: appena
 una clip con quel nome compare nel GLB, il bottone corrispondente appare da solo

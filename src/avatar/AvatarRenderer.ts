@@ -84,6 +84,12 @@ function toonGradient(): CanvasTexture {
   return texture;
 }
 
+/**
+ * Dove cade il bordo inferiore dell'inquadratura verticale, come frazione
+ * dell'altezza del personaggio: l'orlo del maglione, appena sopra le gambe.
+ */
+const HEM_FRACTION = 0.317;
+
 export class AvatarRenderer {
   readonly scene = new Scene();
   readonly camera: PerspectiveCamera;
@@ -208,6 +214,16 @@ export class AvatarRenderer {
   }
 
   /** Riporta l'avatar all'orientamento frontale. */
+  /**
+   * Aggiunge un oggetto di sfondo: entra in scena ma resta fuori dai contorni.
+   * Serve per l'aura, che è una macchia di luce: un contorno disegnato attorno
+   * la farebbe sembrare un adesivo appiccicato dietro al personaggio.
+   */
+  addBackdrop(object: Object3D): void {
+    this.scene.add(object);
+    this.lines.exclude(object);
+  }
+
   resetOrientation(): void {
     this.pivot.rotation.y = 0;
   }
@@ -301,15 +317,46 @@ export class AvatarRenderer {
     box.getCenter(center);
 
     const portrait = this.canvas.clientHeight >= this.canvas.clientWidth;
-    // In verticale si inquadra il mezzo busto: deve starci la testa con un po'
-    // di aria sopra — sotto c'è la fascia di stato — e le mani, che nelle mosse
-    // arrivano davanti al petto.
-    const targetY = portrait ? box.max.y - size.y * 0.28 : center.y;
-    const visible = portrait ? size.y * 0.68 : size.y * 1.02;
-    const fov = (this.camera.fov * Math.PI) / 180;
-    const distance = visible / 2 / Math.tan(fov / 2);
 
-    this.camera.position.set(0, targetY, distance + size.z);
+    // In verticale si inquadra il mezzo busto. Il bordo inferiore cade
+    // sull'orlo del maglione: sotto ci sono le gambe, che in una caricatura
+    // mezzo busto non servono e sono anzi la parte meno riuscita del modello.
+    // La frazione è riferita all'altezza totale perché il modello si può
+    // sostituire (vedi ASSET-CONTRACT.md): con un altro personaggio il taglio
+    // resta proporzionato invece di finire a un'altezza buona solo per questo.
+    const hemY = box.min.y + size.y * HEM_FRACTION;
+    // Aria sopra la testa: deve bastare alla striscia dell'aura e alla fascia
+    // di stato, che galleggiano lì sopra. Con un margine stretto la fascia
+    // finiva sulla cima del cranio.
+    const headroom = size.y * 0.105;
+    const wantedHeight = portrait ? box.max.y + headroom - hemY : size.y * 1.02;
+
+    // Il `fov` di three è **verticale**: la larghezza inquadrata vale
+    // `altezza × aspect`. Su uno schermo stretto — un telefono, e ancora di più
+    // il browser dentro un'app, che toglie spazio sopra e sotto — fissare solo
+    // l'altezza taglia le spalle ai lati, e nelle mosse i gomiti escono del
+    // tutto. Perciò si calcola la distanza che serve a ciascuna delle due
+    // dimensioni e si prende la maggiore: l'inquadratura si allarga da sé
+    // invece di amputare il personaggio.
+    const fov = (this.camera.fov * Math.PI) / 180;
+    const halfTan = Math.tan(fov / 2);
+    const aspect = this.camera.aspect || 1;
+    const wantedWidth = size.x * 1.1;
+    const distance = Math.max(wantedHeight / 2 / halfTan, wantedWidth / 2 / (halfTan * aspect));
+
+    // Quando a comandare è la larghezza, in altezza ci sta più del voluto.
+    // Quell'eccedenza va **sopra** la testa, non sotto: il bordo inferiore
+    // resta inchiodato all'orlo, così non compaiono le gambe e non si apre un
+    // vuoto sotto il personaggio. Sopra, invece, lo spazio non è sprecato:
+    // è dove galleggia la fascia di stato.
+    const visibleHeight = 2 * distance * halfTan;
+    const targetY = portrait ? hemY + visibleHeight / 2 : center.y;
+
+    // La distanza va misurata **dal piano del soggetto**, non dalla sua faccia
+    // anteriore: sommare l'intera profondità, come faceva la prima versione,
+    // allontana la camera oltre il calcolo e l'inquadratura esce più larga e
+    // più alta del voluto — era così che ricomparivano le gambe sotto l'orlo.
+    this.camera.position.set(0, targetY, center.z + distance);
     this.camera.lookAt(0, targetY, 0);
     this.camera.updateProjectionMatrix();
   }

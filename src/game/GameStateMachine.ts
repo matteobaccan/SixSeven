@@ -13,6 +13,7 @@
  * possono far scattare a comando.
  */
 import type { CatalogEntry } from '../assets/AssetCatalog.ts';
+import { AuraMeter, type AuraReason, type AuraWinner } from './Aura.ts';
 
 export type GameState =
   | 'INITIALIZING'
@@ -23,6 +24,7 @@ export type GameState =
   | 'REACTION_SAMPLING'
   | 'AVATAR_REACTION'
   | 'NEXT_TURN'
+  | 'MATCH_OVER'
   | 'PAUSED';
 
 /** Intensità della reazione sonora del pubblico (spec 7.3). */
@@ -41,6 +43,14 @@ export type GameEvent =
   | { type: 'PLAYER_DONE' }
   /** Esito del campionamento audio. */
   | { type: 'AUDIO_RESULT'; level: ReactionLevel }
+  /**
+   * Quanto il giocatore si sta muovendo, da 0 a 1. Arriva in continuazione
+   * durante il turno; della raffica la macchina tiene il picco, perché è il
+   * momento migliore a dire se il giocatore ci ha provato, non la media.
+   */
+  | { type: 'AGITATION'; value: number }
+  /** Nuova partita dopo la fine. */
+  | { type: 'RESTART' }
   /** Disponibilità delle periferiche; cambia i percorsi di riserva. */
   | { type: 'SENSORS'; camera: boolean; microphone: boolean }
   | { type: 'PAUSE' }
@@ -66,6 +76,16 @@ export type Intent =
   | { kind: 'sample-audio'; ms: number }
   /** Stato cambiato: serve all'interfaccia. */
   | { kind: 'state'; state: GameState; turn: number }
+  /** Aura dopo il turno: valore, spostamento e motivo. */
+  | {
+      kind: 'aura';
+      value: number;
+      delta: number;
+      performance: number;
+      reason: AuraReason;
+    }
+  /** Partita finita: l'aura ha toccato un estremo. */
+  | { kind: 'match-over'; winner: AuraWinner; turns: number }
   /** Esito del turno, per il riepilogo a schermo. */
   | {
       kind: 'outcome';
@@ -119,6 +139,8 @@ export interface GameOptions {
   config?: Partial<GameConfig>;
   /** Sorgente casuale iniettabile, per rendere i test deterministici. */
   random?: () => number;
+  /** Contatore dell'aura; se assente se ne crea uno al valore iniziale. */
+  aura?: AuraMeter;
 }
 
 /** Reazioni preferite per livello sonoro; la scelta resta non vincolante. */
@@ -143,10 +165,15 @@ export class GameStateMachine {
   private lastReactionId: string | null = null;
   private currentMove: CatalogEntry | null = null;
   private movementSeen = false;
+  /** Picco di agitazione del turno, oppure -1 se non è arrivata nessuna misura. */
+  private agitation = -1;
+  private pendingWinner: AuraWinner | null = null;
+  private readonly aura: AuraMeter;
 
   constructor(private readonly options: GameOptions) {
     this.config = { ...DEFAULT_CONFIG, ...options.config };
     this.random = options.random ?? Math.random;
+    this.aura = options.aura ?? new AuraMeter();
     if (options.moves.length === 0) throw new Error('Nessuna mossa disponibile nel catalogo');
     if (options.reactions.length === 0) throw new Error('Nessuna reazione disponibile nel catalogo');
   }
@@ -157,6 +184,11 @@ export class GameStateMachine {
 
   get turn(): number {
     return this.turnCount;
+  }
+
+  /** Aura corrente: la legge l'interfaccia al primo disegno. */
+  get auraValue(): number {
+    return this.aura.value;
   }
 
   onIntent(listener: (intent: Intent) => void): () => void {
@@ -180,6 +212,19 @@ export class GameStateMachine {
     if (event.type === 'SENSORS') {
       this.hasCamera = event.camera;
       this.hasMicrophone = event.microphone;
+      return;
+    }
+    if (event.type === 'AGITATION') {
+      if (event.value > this.agitation) this.agitation = event.value;
+      return;
+    }
+    if (event.type === 'RESTART') {
+      if (this.current !== 'MATCH_OVER') return;
+      this.aura.reset();
+      this.turnCount = 0;
+      this.pendingWinner = null;
+      this.emit({ kind: 'aura', value: this.aura.value, delta: 0, performance: 0, reason: 'pari' });
+      this.beginAvatarTurn();
       return;
     }
     if (event.type === 'PAUSE') {
@@ -247,10 +292,15 @@ export class GameStateMachine {
 
       case 'AVATAR_REACTION':
         if (event.type === 'CLIP_FINISHED') {
+          if (this.pendingWinner) return this.endMatch(this.pendingWinner);
           this.enter('NEXT_TURN');
           this.emit({ kind: 'idle' });
           this.options.timers.set('next-turn', this.config.nextTurnMs);
         }
+        return;
+
+      case 'MATCH_OVER':
+        // Si esce solo con RESTART, gestito prima dello switch.
         return;
 
       case 'NEXT_TURN':
@@ -265,6 +315,7 @@ export class GameStateMachine {
   private beginAvatarTurn(): void {
     this.turnCount += 1;
     this.movementSeen = false;
+    this.agitation = -1;
     this.currentMove = this.pickMove();
     this.lastMoveId = this.currentMove.id;
     this.enter('AVATAR_TURN');
@@ -299,6 +350,25 @@ export class GameStateMachine {
     // non ha giocato: qualunque cosa dica il microfono, la reazione giusta è
     // quella delusa.
     const effective: ReactionLevel = this.hasCamera && !this.movementSeen ? 'low' : level;
+
+    // L'aura giudica sul livello grezzo, non su `effective`: il caso del
+    // giocatore immobile lo riconosce da sé dall'agitazione, e contarlo due
+    // volte lo farebbe pesare il doppio.
+    const verdict = this.aura.apply({
+      agitation: this.agitation >= 0 ? this.agitation : null,
+      approval: level,
+      watched: this.hasCamera,
+      moved: this.movementSeen,
+    });
+    this.pendingWinner = verdict.winner;
+    this.emit({
+      kind: 'aura',
+      value: verdict.value,
+      delta: verdict.delta,
+      performance: verdict.performance,
+      reason: verdict.reason,
+    });
+
     const reaction = this.pickReaction(effective);
     this.lastReactionId = reaction.id;
     this.enter('AVATAR_REACTION');
@@ -312,6 +382,23 @@ export class GameStateMachine {
       });
     }
     this.emit({ kind: 'play', entry: reaction });
+  }
+
+  /**
+   * Chiusura della partita. L'ultima clip non è una reazione al turno ma il
+   * commento sull'esito: l'avatar festeggia se ha tenuto l'aura, incassa se
+   * l'ha persa. Se la clip non è nel modello si torna all'attesa, senza
+   * inventarsi un ripiego muto.
+   */
+  private endMatch(winner: AuraWinner): void {
+    this.options.timers.clearAll();
+    this.enter('MATCH_OVER');
+    this.emit({ kind: 'match-over', winner, turns: this.turnCount });
+    const closing = this.options.reactions.find(
+      (r) => r.id === (winner === 'avatar' ? 'RX-03' : 'RX-04'),
+    );
+    if (closing) this.emit({ kind: 'play', entry: closing });
+    else this.emit({ kind: 'idle' });
   }
 
   /** Mossa a caso, mai due volte di fila se ce n'è più d'una. */
