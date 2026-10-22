@@ -281,6 +281,21 @@ console.log('Venti turni di fila: nessuna mossa ripetuta, nessuno stato inatteso
   }
   const repeats = seen.filter((id, i) => i > 0 && id === seen[i - 1]).length;
   expect(repeats, 0, 'nessuna mossa due volte di fila');
+
+  // Vincolo vero: il repertorio si consuma come un mazzo, e dentro ogni giro
+  // non escono doppioni. Il controllo è sui blocchi **allineati** al giro, non
+  // su una finestra scorrevole: a cavallo fra due giri un doppione è lecito per
+  // costruzione — l'ultima di un mazzo e una delle prime del successivo possono
+  // coincidere, purché non siano di fila, e quello lo garantisce il controllo
+  // qui sopra.
+  const size = entriesOfKind('move', ALL_CLIPS).length;
+  let roundsWithRepeats = 0;
+  for (let i = 0; i < seen.length; i += size) {
+    const round = seen.slice(i, i + size);
+    if (new Set(round).size !== round.length) roundsWithRepeats += 1;
+  }
+  expect(roundsWithRepeats, 0, `nessun doppione dentro un giro di ${size} mosse`);
+  expect(new Set(seen).size, size, 'tutte le mosse del catalogo sono uscite');
   expect(h.machine.turn, 21, 'ventuno turni contati');
   expect(h.machine.state, 'AVATAR_TURN', 'stato coerente alla fine');
 }

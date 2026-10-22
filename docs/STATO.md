@@ -97,9 +97,15 @@ Una soglia fissa dipenderebbe da luce, rumore del sensore, distanza e frame
 rate, cioè le variabili che la specifica stessa (§6.2, §7.3) segnala come
 incognite. Restano minimi assoluti come rete di sicurezza.
 
-**9. Mosse scelte a caso, mai due volte di fila** (punto aperto §12.6). È il
-comportamento che richiede meno impalcatura; le sequenze si aggiungono
-sostituendo `pickMove` senza toccare il resto.
+**9. Il repertorio si consuma come un mazzo** (punto aperto §12.6). La prima
+versione evitava solo la ripetizione immediata, e non bastava: con otto mosse e
+una partita di quattro-otto turni si poteva rivedere la stessa mossa tre volte
+mentre altre non comparivano mai, e il repertorio sembrava più povero di quanto
+fosse. Ora una mossa non torna finché non sono uscite tutte le altre; esaurito
+il giro si rimescola, escludendo l'ultima uscita perché il passaggio fra un giro
+e il successivo sarebbe altrimenti l'unico punto in cui una mossa potrebbe
+ripetersi di fila. Le sequenze decise a mano si aggiungono sostituendo
+`pickMove` senza toccare il resto.
 
 **10. Punteggio: l'aura dell'avatar** (punto aperto §12.7). La prima versione
 non aveva punteggio, per non trasformare una sfida comica in una gara. L'aura
