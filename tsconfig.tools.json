@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": [
+      "ES2022"
+    ],
+    "types": [
+      "node"
+    ],
+    "tsBuildInfoFile": "./node_modules/.tmp/tools.tsbuildinfo"
+  },
+  "include": [
+    "tools",
+    "src/assets/BoneNaming.ts",
+    "src/assets/AssetCatalog.ts",
+    "src/game/GameStateMachine.ts"
+  ],
+  "_comment": "I moduli di src elencati sono senza dipendenze dal DOM: il motore li usa a runtime, i tool li verificano."
+}

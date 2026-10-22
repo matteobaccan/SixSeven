@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f4efe6" />
+    <title>Six Seven</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="stage-wrap">
+        <canvas id="stage" aria-label="Avatar 3D di Six Seven"></canvas>
+
+        <p id="fps" class="fps" aria-hidden="true">— fps</p>
+
+        <!-- Anteprima della telecamera: riscontro che il giocatore è inquadrato. -->
+        <div id="camera" class="camera is-hidden">
+          <div id="camera-slot" class="camera-slot"></div>
+          <div class="motion"><div id="motion-bar" class="motion-bar"></div></div>
+        </div>
+
+        <!-- Fascia di stato del turno. -->
+        <div id="banner" class="banner is-hidden">
+          <p id="banner-turn" class="banner-turn">Turno 1</p>
+          <p id="banner-hint" class="banner-hint"></p>
+        </div>
+
+        <div id="loader" class="loader">
+          <p id="loader-text">Caricamento dell'avatar…</p>
+          <div class="loader-track"><div id="loader-bar" class="loader-bar"></div></div>
+        </div>
+
+        <!-- Schermata iniziale. -->
+        <div id="start" class="start is-hidden">
+          <h1>Six&nbsp;Seven</h1>
+          <p class="start-lead">
+            L'avatar fa una mossa, poi tocca a te rifarla davanti alla telecamera.
+            Lui guarda, e commenta.
+          </p>
+          <button id="start-sensors" type="button" class="primary-action">
+            Gioca con telecamera e microfono
+          </button>
+          <button id="start-plain" type="button" class="ghost-action">Gioca senza</button>
+          <p id="start-note" class="start-note">
+            Video e audio restano sul tuo dispositivo: non vengono registrati né inviati da
+            nessuna parte.
+          </p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="turn-controls">
+          <button id="done" type="button" class="primary-action is-hidden">Ho finito</button>
+          <button id="pause" type="button" class="ghost-action is-hidden">Pausa</button>
+          <button id="resume" type="button" class="primary-action is-hidden">Riprendi</button>
+        </div>
+
+        <p id="outcome" class="outcome"></p>
+
+        <details class="extra">
+          <summary>Repertorio e diagnostica</summary>
+
+          <div class="extra-body">
+            <p id="status" class="status">—</p>
+
+            <h2>Mosse</h2>
+            <div id="moves" class="grid"></div>
+
+            <h2>Reazioni</h2>
+            <div id="reactions" class="grid"></div>
+
+            <div class="row">
+              <button id="reset" type="button" class="ghost-action">Riporta di fronte</button>
+            </div>
+
+            <ul id="planned" class="notes"></ul>
+            <ul id="diagnostics" class="notes"></ul>
+          </div>
+        </details>
+      </section>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
