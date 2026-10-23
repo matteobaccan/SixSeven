@@ -312,6 +312,9 @@ async function boot(): Promise<void> {
       audio,
       halo,
       ui,
+      // La ripartizione del catalogo serve agli script di verifica visiva,
+      // che devono poter rendere le sole mosse senza tenersene una copia.
+      catalog: { moves, reactions },
       get machine() {
         return machine;
       },

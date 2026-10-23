@@ -73,6 +73,7 @@ src/
   main.ts                 collante: intenti della macchina → moduli concreti
 
 tools/                    pipeline di produzione dell'avatar (non va nel bundle)
+  visual/                 verifica nel browser: inquadratura, aura, mosse, sensori
   build-avatar.ts         orchestratore: assembla ed esporta il GLB
   avatar/rig.ts           scheletro e posa di riposo
   avatar/mesh.ts          geometria del personaggio

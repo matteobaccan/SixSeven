@@ -77,6 +77,7 @@ src/
   main.ts                 the glue: state-machine intents -> concrete modules
 
 tools/                    avatar production pipeline (not part of the bundle)
+  visual/                 browser checks: framing, aura, moves, sensors
   build-avatar.ts         orchestrator: assembles and exports the GLB
   avatar/rig.ts           skeleton and rest pose
   avatar/mesh.ts          character geometry

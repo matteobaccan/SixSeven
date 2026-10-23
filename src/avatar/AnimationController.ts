@@ -43,6 +43,16 @@ export class AnimationController {
     return [...this.actions.keys()];
   }
 
+  /**
+   * Durata di una clip in secondi, 0 se non è nel modello. La espone per gli
+   * script di verifica visiva (`tools/visual/`), che devono campionare una
+   * clip a istanti precisi senza tenersi una tabella di durate che invecchia
+   * a ogni modifica delle animazioni.
+   */
+  duration(name: string): number {
+    return this.actions.get(name)?.getClip().duration ?? 0;
+  }
+
   has(name: string): boolean {
     return this.actions.has(name);
   }

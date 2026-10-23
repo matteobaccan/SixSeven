@@ -125,6 +125,17 @@ collo di bottiglia misurato lo giustifica.
 
 ## Note tecniche non ovvie
 
+**Il rilevamento analizza i fotogrammi, non i tick dell'orologio.** Il
+campionamento gira a 20 Hz, ma una telecamera può consegnare molto meno: poca
+luce, un telefono che risparmia batteria, un flusso a scatti. Analizzando a
+ogni tick, un campione su due confrontava due fotogrammi **identici** e
+misurava zero movimento; siccome `startFrames` chiede campioni consecutivi
+sopra soglia, l'alternanza «valore buono, zero, valore buono» azzerava il
+conteggio a ogni giro e l'inizio del gesto non veniva **mai** dichiarato. Ora
+`sample` salta i fotogrammi già visti confrontando `video.currentTime`. Era un
+difetto vero — con una telecamera lenta il gioco non si sarebbe accorto di
+niente — e l'ha trovato `tools/visual/motion.mjs`, non un controllo headless.
+
 **L'immobilità si giudica dall'evento, non dal numero.** L'aura riconosce il
 giocatore che non ha giocato da `movementSeen`, cioè dal fatto che il
 rilevamento abbia dichiarato l'inizio del movimento, non dall'agitazione

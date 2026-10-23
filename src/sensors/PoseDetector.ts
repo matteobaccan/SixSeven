@@ -74,6 +74,11 @@ export class PoseDetector {
   private readonly canvas = document.createElement('canvas');
   private readonly ctx: CanvasRenderingContext2D;
   private previous: Uint8ClampedArray | null = null;
+  /**
+   * Istante dell'ultimo fotogramma analizzato. Serve a non confrontare due
+   * volte lo stesso: vedi `sample`.
+   */
+  private lastFrameTime = -1;
 
   private timer: number | null = null;
   private watching = false;
@@ -153,6 +158,7 @@ export class PoseDetector {
     this.calibration = [];
     this.quiet = 0;
     this.previous = null;
+    this.lastFrameTime = -1;
     this.timer = window.setInterval(() => this.sample(), 1000 / this.options.sampleHz);
   }
 
@@ -167,6 +173,17 @@ export class PoseDetector {
 
   private sample(): void {
     if (!this.watching || this.video.readyState < 2) return;
+
+    // Si analizza solo quando è arrivato un fotogramma nuovo. Il campionamento
+    // va a 20 Hz, ma una telecamera può consegnare molto meno — poca luce, un
+    // telefono che risparmia batteria, un flusso a scatti. Senza questo
+    // controllo un campione su due confronterebbe due fotogrammi identici,
+    // misurando zero movimento: `startFrames` chiede campioni **consecutivi**
+    // sopra soglia, quindi l'alternanza «valore buono, zero, valore buono»
+    // azzera il conteggio a ogni giro e l'inizio del gesto non viene mai
+    // dichiarato. Era un difetto vero, trovato da `tools/visual/motion.mjs`.
+    if (this.video.currentTime === this.lastFrameTime) return;
+    this.lastFrameTime = this.video.currentTime;
 
     this.ctx.drawImage(this.video, 0, 0, GRID_WIDTH, GRID_HEIGHT);
     const frame = this.ctx.getImageData(0, 0, GRID_WIDTH, GRID_HEIGHT).data;
