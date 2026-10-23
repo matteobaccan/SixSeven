@@ -36,6 +36,21 @@ controllo in CI di confrontare il file versionato con una ricostruzione. Il
 decodificatore è agganciato in `AvatarRenderer`: un GLB non compresso continua a
 caricarsi, uno compresso senza decodificatore no.
 
+## ImgBot non tocca gli asset
+
+`.imgbotconfig` esclude `public/assets/*` e `tools/avatar/face-source.png`.
+
+I primi sono **generati**: una loro ottimizzazione esterna viene sovrascritta
+dalla build successiva, e nel frattempo il controllo in CI che confronta il
+file versionato con una ricostruzione fallisce. È già successo con la pull
+request #6. La compressione di `face.png` è invece tarata dentro
+`face-texture.ts`, dove resta: `deflateStrategy: 2` dà 211,7 kB contro i 213,9
+a cui arrivava ImgBot.
+
+Il secondo è l'originale della caricatura, versionato intatto per provenienza:
+ricomprimerlo non cambia i pixel ma cambia il file, e quei 97 kB pesano solo
+sul clone, non su chi gioca.
+
 ## Risorse statiche
 
 Ogni risorsa caricata a runtime da `public/` passa da `assetUrl()`
