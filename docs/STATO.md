@@ -149,6 +149,15 @@ misurate nel sistema di coordinate dell'originale e lì devono restare. Le UV
 sono riferite alla regione esportata, e il margine di 3 pixel attorno serve
 perché ai bordi il filtraggio bilineare campiona appena fuori.
 
+**La compressione non deve potare.** Un tentativo metteva `prune` e `dedup`
+prima di `meshopt`, con l'idea che comprimere dati destinati a essere scartati
+fosse lavoro sprecato. `prune` però **rimuove la carta del viso**: è una mesh il
+cui materiale viene sostituito a runtime dal renderer, e dall'interno del
+documento glTF sembra inutilizzata. Il risultato era un avatar senza testa, con
+l'inquadratura che si allargava da sé perché il riquadro d'ingombro si era
+accorciato. L'ha trovato `tools/visual/frame.mjs`: i controlli headless del
+modello non sanno niente, e la build passava.
+
 **Il GLB è compresso con meshopt.** Misurato su questo modello: meshopt 334 kB,
 Draco 688 kB, sola quantizzazione 909 kB, non compresso 1233 kB. Una nota
 precedente diceva che Draco «servirebbe poco» perché comprime la geometria
@@ -271,6 +280,13 @@ Della specifica (§12):
   davanti alla telecamera, in una stanza vera.
 
 Noti dal lavoro fatto, da rifinire:
+
+- nelle mosse che alzano il bacino — `ThreePointer`, `MindBlown`, `SixSevenKid`,
+  `ExtremeSixSeven` — compare in basso una striscia di pantaloni di pochi pixel:
+  il bordo inferiore è inchiodato all'orlo del maglione nella posa di riposo, e
+  qualunque sollevamento scopre ciò che sta sotto. Si risolve abbassando il
+  bordo di qualche centimetro — ma allora la striscia si vede sempre — oppure
+  contenendo i sollevamenti nelle clip. Nessuna delle due è gratis;
 
 - la testa regge rotazioni fino a circa 30°: oltre, la natura piatta si vede;
 - niente bocca spalancata e niente sguardo che si sposta davvero: servirebbero
