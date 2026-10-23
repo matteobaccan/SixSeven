@@ -14,7 +14,11 @@ surface and animated through influence zones (eyelids, eyebrows, jaw).
 
 **Status: playable.** Fourteen animations, alternating turns, end-of-move
 detection from the camera, and reactions chosen from how much noise the player
-makes. The avatar has an **aura**, drawn behind him: it rises or falls each turn
+makes. The screen shows what the application hears and sees: a camera preview with a
+motion indicator, and a voice level with the thresholds marked, so you can tell
+whether the noise was enough.
+
+The avatar has an **aura**, drawn behind him: it rises or falls each turn
 according to how much the player moves and how loudly the audience approves. At
 zero the player wins; at maximum nobody answered back, and the avatar is
 delighted. What remains is testing on real devices — see `docs/STATO.md`.

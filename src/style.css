@@ -86,11 +86,22 @@ body {
 
 /* --- Anteprima telecamera e indicatore di movimento --- */
 
-.camera {
+/*
+ * Telecamera e microfono incolonnati: così nascondere l'uno non sposta l'altro,
+ * che è quello che succedeva con due elementi ancorati entrambi al fondo.
+ */
+.sensors {
   position: absolute;
-  left: 10px;
-  bottom: 10px;
+  left: calc(10px + env(safe-area-inset-left));
+  bottom: calc(10px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   width: 96px;
+}
+
+.camera {
+  width: 100%;
   border-radius: 10px;
   overflow: hidden;
   background: #2a2722;
@@ -587,4 +598,91 @@ button:focus-visible {
     min-height: 26px;
     font-size: 12px;
   }
+}
+
+/* --- Livello audio --- */
+
+/*
+ * L'indicatore mostra il guadagno sul rumore di fondo, non il volume assoluto:
+ * è quel numero a decidere la reazione, ed è l'unico che dica qualcosa in una
+ * stanza rumorosa. La scala arriva a 20 dB e porta due tacche fisse dove
+ * cominciano MEDIUM e HIGH, perché la domanda del giocatore non è «mi sente?»
+ * ma «è bastato?».
+ */
+.audio {
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 4px 7px 6px;
+  box-shadow: var(--shadow);
+}
+
+.audio-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.audio-label {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.audio-db {
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+}
+
+.audio-track {
+  position: relative;
+  margin-top: 3px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  overflow: hidden;
+}
+
+.audio-bar {
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: var(--ink-soft);
+  transition: width 0.08s linear, background-color 0.2s ease;
+}
+
+/* Le tacche delle soglie, in percentuale della scala 0-20 dB. */
+.audio-mark {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--panel);
+}
+
+.audio-mark-medium {
+  /* I valori di ripiego valgono per le soglie predefinite, 6 e 14 dB su 20. */
+  left: var(--mark-medium, 30%);
+}
+
+.audio-mark-high {
+  left: var(--mark-high, 70%);
+}
+
+/* Mentre l'applicazione sta misurando davvero, l'indicatore si accende. */
+.audio.is-sampling {
+  border-color: var(--accent);
+}
+
+.audio.is-sampling .audio-label {
+  color: var(--accent-dark);
+}
+
+/* Microfono presente ma contesto audio fermo: va detto, non nascosto. */
+.audio.is-muted .audio-db {
+  color: var(--warn);
 }

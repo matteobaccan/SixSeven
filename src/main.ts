@@ -22,7 +22,13 @@ import { inspectAvatar } from './assets/AvatarContract.ts';
 import { applyBoneNaming } from './assets/BoneNaming.ts';
 import { assetUrl } from './assets/assetUrl.ts';
 import { AURA_MAX, AURA_START, type AuraReason } from './game/Aura.ts';
-import { GameStateMachine, type Intent, type TimerToken, type Timers } from './game/GameStateMachine.ts';
+import {
+  GameStateMachine,
+  type GameState,
+  type Intent,
+  type TimerToken,
+  type Timers,
+} from './game/GameStateMachine.ts';
 import { AudioReactionAnalyzer } from './sensors/AudioReactionAnalyzer.ts';
 import { PoseDetector } from './sensors/PoseDetector.ts';
 import { UIController } from './ui/UIController.ts';
@@ -40,6 +46,17 @@ const OUTCOME_TEXT = {
   low: 'Silenzio in sala.',
   unknown: 'Senza microfono non si sa com’è andata.',
 } as const;
+
+/**
+ * Stati in cui a fare rumore è il giocatore: durante questi la stima del
+ * rumore di fondo resta ferma.
+ */
+const PLAYER_PHASES = new Set<GameState>([
+  'PLAYER_READY',
+  'PLAYER_TURN',
+  'WAITING_FOR_STILLNESS',
+  'REACTION_SAMPLING',
+]);
 
 /** Perché l'aura si è mossa, detto al giocatore in poche parole. */
 const AURA_NOTE: Record<AuraReason, string> = {
@@ -199,12 +216,18 @@ async function boot(): Promise<void> {
         ui.showCamera(intent.on && pose.available);
         return;
       case 'sample-audio':
+        ui.setAudioSampling(true);
         void audio.sample(intent.ms).then((sample) => {
+          ui.setAudioSampling(false);
           machine?.send({ type: 'AUDIO_RESULT', level: sample.level });
         });
         return;
       case 'state':
         ui.setTurn(intent.state, intent.turn);
+        // Il rumore di fondo non va inseguito mentre è il giocatore a farlo:
+        // si alzerebbe fin quasi al livello della sua stessa reazione, e il
+        // campionamento successivo la leggerebbe come silenzio.
+        audio.setFloorFrozen(PLAYER_PHASES.has(intent.state));
         return;
       case 'aura':
         halo.setRatio(intent.value / AURA_MAX, intent.delta !== 0);
@@ -238,6 +261,11 @@ async function boot(): Promise<void> {
       ui.setStartNote('Richiesta dei permessi in corso…');
       [camera, microphone] = await Promise.all([pose.request(), audio.request()]);
       if (camera) ui.attachCamera(pose.videoElement);
+      ui.showAudio(microphone);
+      if (microphone) {
+        const { medium, high } = audio.thresholdsDb;
+        ui.setAudioThresholds(medium, high);
+      }
       if (!camera && !microphone) {
         ui.setStartNote(
           'Niente telecamera né microfono: si gioca lo stesso, i turni passano a tempo.',
@@ -276,6 +304,7 @@ async function boot(): Promise<void> {
 
   let frames = 0;
   let elapsed = 0;
+  let audioTick = 0;
 
   renderer.start((dt) => {
     // L'ordine conta: il ripristino evita che gli scostamenti procedurali si
@@ -294,6 +323,18 @@ async function boot(): Promise<void> {
       ui.setFps(Math.round(frames / elapsed));
       frames = 0;
       elapsed = 0;
+    }
+
+    // L'indicatore audio si aggiorna più spesso degli fps ma non a ogni
+    // fotogramma: a 10 Hz il movimento della barra si legge già bene e non si
+    // tocca il DOM sessanta volte al secondo per niente.
+    audioTick += dt;
+    if (audioTick >= 0.1) {
+      audioTick = 0;
+      if (audio.available) {
+        const reading = audio.read();
+        ui.setAudio(reading.aboveFloorDb, reading.level, reading.running);
+      }
     }
   });
 

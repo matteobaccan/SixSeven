@@ -51,12 +51,13 @@ CHROMIUM_PATH=/percorso/a/chrome node tools/visual/smoke.mjs
 | `node tools/visual/frame.mjs [clip] [secondi]` | un fotogramma a dimensione piena |
 | `node tools/visual/aura.mjs` | l'aura ai tre livelli e la schermata di fine partita |
 | `node tools/visual/motion.mjs` | rilevamento del movimento con un canvas animato al posto della telecamera |
+| `node tools/visual/audio.mjs` | che cosa sente il microfono: contesto attivo, segnale, fondo congelato nel turno del giocatore |
 
-`smoke`, `requests` e `motion` escono con codice diverso da zero quando
+`smoke`, `requests`, `motion` e `audio` escono con codice diverso da zero quando
 falliscono: si possono incatenare. Gli altri producono immagini da guardare, e
 il giudizio resta umano.
 
-`motion` ha tre esiti invece di due: `0` coerente, `1` rilevatore incoerente,
+`motion` e `audio` hanno tre esiti invece di due: `0` coerente, `1` rilevatore incoerente,
 `2` **inconcludente** — la sorgente sintetica non ha prodotto movimento perché
 in quel browser `captureStream()` non aggiorna il video. Distinguere il secondo
 dal terzo non è pedanteria: senza quella distinzione un difetto della sorgente

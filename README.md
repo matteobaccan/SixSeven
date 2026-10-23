@@ -14,6 +14,10 @@ per zone di influenza (palpebre, sopracciglia, mandibola).
 
 **Stato: giocabile.** Quattordici animazioni, turni alternati, rilevamento della
 fine della mossa dalla telecamera e reazioni scelte in base al rumore raccolto.
+A schermo si vede che cosa l'applicazione sente e vede: anteprima della
+telecamera con l'indicatore di movimento, e livello della voce con le soglie in
+vista, per capire se il verso è bastato.
+
 L'avatar ha un'**aura**, disegnata dietro di lui: sale o scende a ogni turno
 secondo quanto si agita il giocatore e quanto lo approva il pubblico. A zero
 vince il giocatore; al massimo nessuno ha ribattuto, e l'avatar se la gode.
