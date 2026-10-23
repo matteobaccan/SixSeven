@@ -127,6 +127,9 @@ Le clip vanno **dentro il GLB**, con questi nomi esatti:
 | S7-06 | `ToDiWorld` | realizzata | braccio teso al cielo |
 | S7-07 | `SixFootSeven` | realizzata | la mano che misura l'altezza |
 | S7-08 | `ThreePointer` | realizzata | tiro da tre, poi la bilancia |
+| S7-10 | `SixSevenKid` | realizzata | mani alte e scomposte |
+| S7-11 | `WhatDoYouWant` | realizzata | mani aperte, spalle su |
+| S7-12 | `MindBlown` | realizzata | pugni alle tempie che si aprono |
 | RX-03 | `Celebration` | realizzata | |
 | RX-04 | `Disappointed` | realizzata | |
 | RX-06 | `TurnTransition` | realizzata | |

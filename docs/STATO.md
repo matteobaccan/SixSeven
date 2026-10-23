@@ -9,7 +9,7 @@ sono state prese e cosa resta aperto.
 | --- | --- |
 | L'avatar 3D è caricato nel browser | sì |
 | Il modello è dotato di uno scheletro utilizzabile | sì, 48 bone |
-| Almeno tre animazioni riproducibili | sì, **quattordici**: otto mosse e sei reazioni |
+| Almeno tre animazioni riproducibili | sì, **diciassette**: undici mosse e sei reazioni |
 | Transizioni senza salti evidenti | sì — ogni clip apre e chiude sulla posa di riposo, con crossfade |
 | Il gioco alterna correttamente i turni | sì |
 | La telecamera consente di stimare la fine della mossa | sì, per differenza fra fotogrammi |
@@ -124,6 +124,22 @@ macchina a stati e come quella privo di dipendenze dal browser.
 collo di bottiglia misurato lo giustifica.
 
 ## Note tecniche non ovvie
+
+**Nei gesti conta la sagoma, non il dettaglio delle dita.** Il gesto italiano
+era stato costruito con le dita a pigna, che è la sua forma più nota. Non si
+leggeva: a 393 punti di larghezza i polpastrelli che convergono occupano una
+quindicina di pixel, e la mano sembrava grattare il mento. Confrontando le mosse
+rese una accanto all'altra si vede il criterio: le mani a dita aperte si
+riconoscono a colpo d'occhio, quelle chiuse su sé stesse no — e il testone della
+caricatura peggiora il confronto, perché toglie scala a tutto il resto. Il gesto
+è stato rifatto a mani aperte, che è l'altra forma dello stesso.
+
+**Le mosse si distinguono anche per dove stanno le mani, non solo per cosa
+fanno.** Con undici mosse il rischio non è più la ripetizione ma la
+somiglianza: tre gesti «mani alte e dita aperte» leggono uguali a prescindere
+dal ritmo. Il repertorio è stato riequilibrato per altezza — basso al petto,
+medio al mento, alto alla testa — e `tools/visual/moves.mjs` serve esattamente a
+controllarlo, rendendole tutte una accanto all'altra.
 
 **La texture esporta solo la regione usata.** Dei 540x773 pixel disegnati, la
 faccia ne usa meno della metà: il resto erano 278 kB scaricati per niente. Il

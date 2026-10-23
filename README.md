@@ -12,7 +12,7 @@ L'avatar è ibrido: **corpo 3D riggato** — serve per i gesti — e **viso dall
 caricatura originale**, applicato come texture a una superficie curva e animato
 per zone di influenza (palpebre, sopracciglia, mandibola).
 
-**Stato: giocabile.** Quattordici animazioni, turni alternati, rilevamento della
+**Stato: giocabile.** Diciassette animazioni, turni alternati, rilevamento della
 fine della mossa dalla telecamera e reazioni scelte in base al rumore raccolto.
 A schermo si vede che cosa l'applicazione sente e vede: anteprima della
 telecamera con l'indicatore di movimento, e livello della voce con le soglie in
