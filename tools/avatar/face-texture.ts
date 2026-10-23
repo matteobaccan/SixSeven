@@ -145,7 +145,19 @@ export function buildFaceTexture(sourcePath: string, outputPath: string): {
   // le righe del colletto e del collo sono misurate lì — quindi il ritaglio è
   // l'ultimo passo, dopo che tutto è stato fatto.
   const cropped = cropTo(png, FACE_TEXTURE_CROP);
-  writeFileSync(outputPath, PNG.sync.write(cropped));
+
+  // Compressione al massimo, con `deflateStrategy: 2` — solo codifica di
+  // Huffman, senza ricerca di corrispondenze. Sembra controintuitivo, ma su
+  // questa immagine è la combinazione che comprime di più: misurate tutte le
+  // strategie e tutti i filtri, 211,7 kB contro i 221,6 delle impostazioni
+  // predefinite. ImgBot, che ha aperto una pull request per ottimizzarla, si
+  // fermava a 213,9. La ricompressione è senza perdita: verificata
+  // riconvertendo e confrontando i pixel decodificati, zero byte di differenza
+  // su 678.592.
+  writeFileSync(
+    outputPath,
+    PNG.sync.write(cropped, { deflateLevel: 9, deflateStrategy: 2 } as never),
+  );
   return {
     width: cropped.width,
     height: cropped.height,

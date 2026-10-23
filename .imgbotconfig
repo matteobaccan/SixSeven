@@ -1,0 +1,6 @@
+{
+  "ignoredFiles": [
+    "public/assets/*",
+    "tools/avatar/face-source.png"
+  ]
+}
