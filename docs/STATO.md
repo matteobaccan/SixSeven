@@ -9,7 +9,7 @@ sono state prese e cosa resta aperto.
 | --- | --- |
 | L'avatar 3D è caricato nel browser | sì |
 | Il modello è dotato di uno scheletro utilizzabile | sì, 48 bone |
-| Almeno tre animazioni riproducibili | sì, **quattordici**: otto mosse e sei reazioni |
+| Almeno tre animazioni riproducibili | sì, **diciassette**: undici mosse e sei reazioni |
 | Transizioni senza salti evidenti | sì — ogni clip apre e chiude sulla posa di riposo, con crossfade |
 | Il gioco alterna correttamente i turni | sì |
 | La telecamera consente di stimare la fine della mossa | sì, per differenza fra fotogrammi |
@@ -125,6 +125,48 @@ collo di bottiglia misurato lo giustifica.
 
 ## Note tecniche non ovvie
 
+**Nei gesti conta la sagoma, non il dettaglio delle dita.** Il gesto italiano
+era stato costruito con le dita a pigna, che è la sua forma più nota. Non si
+leggeva: a 393 punti di larghezza i polpastrelli che convergono occupano una
+quindicina di pixel, e la mano sembrava grattare il mento. Confrontando le mosse
+rese una accanto all'altra si vede il criterio: le mani a dita aperte si
+riconoscono a colpo d'occhio, quelle chiuse su sé stesse no — e il testone della
+caricatura peggiora il confronto, perché toglie scala a tutto il resto. Il gesto
+è stato rifatto a mani aperte, che è l'altra forma dello stesso.
+
+**Le mosse si distinguono anche per dove stanno le mani, non solo per cosa
+fanno.** Con undici mosse il rischio non è più la ripetizione ma la
+somiglianza: tre gesti «mani alte e dita aperte» leggono uguali a prescindere
+dal ritmo. Il repertorio è stato riequilibrato per altezza — basso al petto,
+medio al mento, alto alla testa — e `tools/visual/moves.mjs` serve esattamente a
+controllarlo, rendendole tutte una accanto all'altra.
+
+**La texture esporta solo la regione usata.** Dei 540x773 pixel disegnati, la
+faccia ne usa meno della metà: il resto erano 278 kB scaricati per niente. Il
+ritaglio è l'**ultimo** passo della costruzione, perché tutte le elaborazioni
+— righe del colletto, uniformatura del collo, contorno della mascella — sono
+misurate nel sistema di coordinate dell'originale e lì devono restare. Le UV
+sono riferite alla regione esportata, e il margine di 3 pixel attorno serve
+perché ai bordi il filtraggio bilineare campiona appena fuori.
+
+**La compressione non deve potare.** Un tentativo metteva `prune` e `dedup`
+prima di `meshopt`, con l'idea che comprimere dati destinati a essere scartati
+fosse lavoro sprecato. `prune` però **rimuove la carta del viso**: è una mesh il
+cui materiale viene sostituito a runtime dal renderer, e dall'interno del
+documento glTF sembra inutilizzata. Il risultato era un avatar senza testa, con
+l'inquadratura che si allargava da sé perché il riquadro d'ingombro si era
+accorciato. L'ha trovato `tools/visual/frame.mjs`: i controlli headless del
+modello non sanno niente, e la build passava.
+
+**Il GLB è compresso con meshopt.** Misurato su questo modello: meshopt 334 kB,
+Draco 688 kB, sola quantizzazione 909 kB, non compresso 1233 kB. Una nota
+precedente diceva che Draco «servirebbe poco» perché comprime la geometria
+mentre qui un terzo del file sono animazioni: era troppo netta — Draco toglie
+il 44%, solo che meshopt ne toglie il 73% e il suo decodificatore arriva con
+three e pesa una ventina di kB contro i circa 200 del wasm di Draco. La
+compressione è deterministica, verificata su build ripetute, quindi il
+controllo in CI sull'avatar versionato continua a valere.
+
 **Il rumore di fondo non si insegue durante il turno del giocatore.** La stima
 del fondo serve a misurare quanto una reazione *si stacca* dall'ambiente, e
 inseguirla in continuo sembrava giusto. Non lo era: durante il turno è il
@@ -239,21 +281,26 @@ Della specifica (§12):
 
 Noti dal lavoro fatto, da rifinire:
 
+- nelle mosse che alzano il bacino — `ThreePointer`, `MindBlown`, `SixSevenKid`,
+  `ExtremeSixSeven` — compare in basso una striscia di pantaloni di pochi pixel:
+  il bordo inferiore è inchiodato all'orlo del maglione nella posa di riposo, e
+  qualunque sollevamento scopre ciò che sta sotto. Si risolve abbassando il
+  bordo di qualche centimetro — ma allora la striscia si vede sempre — oppure
+  contenendo i sollevamenti nelle clip. Nessuna delle due è gratis;
+
 - la testa regge rotazioni fino a circa 30°: oltre, la natura piatta si vede;
 - niente bocca spalancata e niente sguardo che si sposta davvero: servirebbero
   altri disegni o un volto modellato;
 - la mano chiusa legge come un blocco unico: va separata meglio nelle falangi;
 - le gambe restano lunghe per una proporzione pienamente caricaturale;
-- il primo caricamento pesa circa 1,7 MB, e le due voci grosse sono il GLB
-  (1077 kB: 555 di geometria, 362 di animazioni, 160 di JSON) e `face.png`
-  (493 kB). Vanno affrontate in modo diverso: su `avatar.glb` **Draco servirebbe
-  poco**, perché comprime la geometria e qui un terzo del file sono tracce di
-  animazione — serve `meshopt`/`gltfpack`, che le comprime entrambe. Su
-  `face.png` il margine è maggiore e costa meno: l'immagine è disegnata a tinte
-  piatte e si usa solo il ritaglio `FACE_CROP`, quindi ritagliarla in fase di
-  build o passare a WebP la ridurrebbe di molto. Il ritaglio però va in coppia
-  con le UV in `tools/avatar/face.ts`, ed è il punto appena sistemato del
-  contorno: da fare con una verifica visiva accanto.
+- il primo caricamento è sceso da ~1,7 MB a **720 kB in transito**, ma la voce
+  più pesante è ora `face.png` con 221 kB, che il PNG non comprime oltre.
+  Quantizzarla a 255 colori la porterebbe a 24 kB — misurato — con un errore
+  medio di 1,9 su 255, invisibile. Il problema è l'**alfa**: l'errore arriva a
+  25, e con `alphaTest` a 0,5 significa spostare il contorno del viso di un
+  pixel, cioè il dettaglio su cui si è lavorato di più. Si farebbe quantizzando
+  il solo RGB e lasciando l'alfa intatta, il che richiede un quantizzatore in
+  Node — `pngjs` non ne ha uno. Da valutare se i 197 kB valgono quel codice.
 
 ## Prossimo passo
 

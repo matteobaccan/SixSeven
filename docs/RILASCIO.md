@@ -69,17 +69,19 @@ storia.
 
 Misurato sulla build attuale:
 
-| file | sul disco | compresso in transito |
+| file | sul disco | in transito |
 |---|---:|---:|
-| `avatar.glb` | 1077 kB | 382 kB |
-| `face.png` | 493 kB | 484 kB |
-| chunk `three` | 571 kB | 144 kB |
-| applicazione (JS + CSS + HTML) | 47 kB | 17 kB |
+| `avatar.glb` (meshopt) | 334 kB | 334 kB |
+| `face.png` (ritagliata) | 221 kB | 221 kB |
+| chunk `three` | 579 kB | 144 kB |
+| applicazione (JS + CSS + HTML) | 57 kB | 18 kB |
 
-Il primo caricamento sta attorno a 1,7-2,2 MB a seconda di cosa l'hosting
-comprime: Pages comprime i file di testo, non i binari. Su rete mobile è
-accettabile ma non brillante, e le due voci più pesanti sono entrambe
-riducibili — vedi i punti aperti in `STATO.md`.
+Il primo caricamento è di circa **720 kB**: Pages comprime i file di testo, non
+i binari, quindi GLB e PNG viaggiano come stanno sul disco. Il GLB di suo
+comprimerebbe a 136 kB, ma non è una leva che abbiamo noi.
+
+La voce più pesante è ormai `face.png`, e il margine che resta su di lei è
+descritto nei punti aperti di `STATO.md`.
 
 Una nota sulla cache, perché è un problema che si è già presentato. I file in
 `public/` vengono serviti **con il nome originale**, al contrario di JS e CSS

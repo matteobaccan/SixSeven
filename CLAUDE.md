@@ -28,6 +28,14 @@ rigenerarli. La build è deterministica: chi tocca i sorgenti dell'avatar
 rigenera e committa i file nello stesso commit, altrimenti la CI se ne accorge
 e fallisce.
 
+## Il GLB è compresso in fase di build
+
+`npm run build:avatar` esporta il modello e poi lo comprime con meshopt
+(`compress:avatar`). La compressione è deterministica, ed è ciò che permette al
+controllo in CI di confrontare il file versionato con una ricostruzione. Il
+decodificatore è agganciato in `AvatarRenderer`: un GLB non compresso continua a
+caricarsi, uno compresso senza decodificatore no.
+
 ## Risorse statiche
 
 Ogni risorsa caricata a runtime da `public/` passa da `assetUrl()`

@@ -101,6 +101,38 @@ const ENTRIES: readonly CatalogEntry[] = [
     loop: false,
     timeScale: 1,
   },
+  // S7-09 è volutamente libero: è riservato alla benedizione che collassa nella
+  // bilancia, ricavata da un momento documentato del fenomeno — Papa Leone XIV
+  // che fa il gesto con dei pellegrini, maggio 2026. Costruibile con le sole
+  // pose, non realizzata: è una gestualità religiosa sul volto di una persona
+  // reale, e la decisione non è tecnica.
+  {
+    id: 'S7-10',
+    name: 'Il 67 Kid',
+    kind: 'move',
+    clip: 'SixSevenKid',
+    description: 'Mani alte e scomposte, come il ragazzino da cui è nato il gesto.',
+    loop: false,
+    timeScale: 1,
+  },
+  {
+    id: 'S7-11',
+    name: 'Ma che vuoi',
+    kind: 'move',
+    clip: 'WhatDoYouWant',
+    description: 'Dita a pigna e polso che scatta: il gesto italiano.',
+    loop: false,
+    timeScale: 1,
+  },
+  {
+    id: 'S7-12',
+    name: 'Mind Blown',
+    kind: 'move',
+    clip: 'MindBlown',
+    description: 'Pugni alle tempie che esplodono in dita spalancate.',
+    loop: false,
+    timeScale: 1,
+  },
 
   // --- Reazioni (spec 4.2) ---
   {

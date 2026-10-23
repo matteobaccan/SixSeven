@@ -24,6 +24,10 @@ npm install --no-save playwright
 npx playwright install chromium
 ```
 
+Attenzione a una trappola di npm: un successivo `npm install --no-save <altro>`
+**pota** i pacchetti installati così, Playwright compreso, e gli script
+falliscono con `ERR_MODULE_NOT_FOUND`. Basta reinstallarlo.
+
 Poi serve il sito in ascolto, di solito il bundle di produzione:
 
 ```bash

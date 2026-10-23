@@ -16,7 +16,7 @@ import { BONE_GROUPS, FINGER_IDS, RIG } from './rig.ts';
 import {
   chinBottomAt,
   FACE_CROP,
-  FACE_IMAGE,
+  FACE_TEXTURE_CROP,
   FACE_LANDMARKS,
   faceSpanAt,
   faceToWorld,
@@ -108,7 +108,12 @@ function faceCard(): Part {
       const [x, y, z] = faceToWorld({ x: imgX, y: imgY });
       positions.push(x, y, z);
       // La texture è l'immagine intera: le UV puntano al ritaglio della testa.
-      uvs.push(imgX / FACE_IMAGE.width, 1 - imgY / FACE_IMAGE.height);
+      // Le UV sono riferite alla regione esportata, non all'immagine sorgente:
+      // la texture contiene solo quella (vedi FACE_TEXTURE_CROP).
+      uvs.push(
+        (imgX - FACE_TEXTURE_CROP.x0) / (FACE_TEXTURE_CROP.x1 - FACE_TEXTURE_CROP.x0),
+        1 - (imgY - FACE_TEXTURE_CROP.y0) / (FACE_TEXTURE_CROP.y1 - FACE_TEXTURE_CROP.y0),
+      );
 
       // Le tre zone più influenti più la testa: quattro influenze, il massimo
       // che glTF trasporta per vertice.

@@ -12,7 +12,7 @@ The avatar is a hybrid: a **rigged 3D body** — needed for the gestures — and
 **face taken from the original caricature**, applied as a texture to a curved
 surface and animated through influence zones (eyelids, eyebrows, jaw).
 
-**Status: playable.** Fourteen animations, alternating turns, end-of-move
+**Status: playable.** Seventeen animations, alternating turns, end-of-move
 detection from the camera, and reactions chosen from how much noise the player
 makes. The screen shows what the application hears and sees: a camera preview with a
 motion indicator, and a voice level with the thresholds marked, so you can tell

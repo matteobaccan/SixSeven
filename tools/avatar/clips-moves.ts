@@ -524,3 +524,193 @@ export const threePointer = (): THREE.AnimationClip =>
     { t: 3.62, pose: sym({ UpperArm_L: [2, -16, -5], LowerArm_L: [-34, 24, 3] }), ease: 'in' },
     { t: 4.0, pose: {} },
   ]);
+
+// ---------------------------------------------------------------------------
+// S7-10 Il 67 Kid — l'origine del gesto, urlata
+// ---------------------------------------------------------------------------
+
+/**
+ * Il gesto nasce da un ragazzino che urla a un torneo giovanile di basket, non
+ * da una posa composta. Qui le mani stanno **più in alto** delle bilance,
+ * all'altezza della testa, e si muovono insieme invece di alternarsi: è il
+ * ritmo, non la posa, a distinguerla da S7-01 e S7-02.
+ *
+ * `shake` sposta le mani in su e giù restando dalla stessa parte, e il corpo
+ * rimbalza con loro.
+ */
+function kidShake(shake: number): Pose {
+  const s = shake;
+  return {
+    ...SPREAD,
+    Hips: [0, s * 0.06, 0],
+    Spine: [-3 - s * 0.06, 0, 0],
+    Chest: [-6 - s * 0.1, 0, 0],
+    Neck: [4, s * 0.1, 0],
+    // La testa scuote in controtempo rispetto alle mani: è ciò che fa leggere
+    // l'eccitazione invece di una ginnastica.
+    Head: [2 - s * 0.14, -s * 0.22, s * 0.12],
+    Jaw: [12, 0, 0],
+    Brow_L: [-22, 0, 0],
+    Brow_R: [-22, 0, 0],
+    Eye_L: [-4, 0, 0],
+    Eye_R: [-4, 0, 0],
+
+    Shoulder_L: [0, -4, 14 + s * 0.2],
+    UpperArm_L: [-52 - s * 0.3, -16, 2 + s * 0.22],
+    LowerArm_L: [-96 - s * 0.5, 54, 6],
+    Hand_L: [-8, -10, 4],
+
+    Shoulder_R: [0, 4, -14 + s * 0.2],
+    UpperArm_R: [-52 - s * 0.3, 16, -2 - s * 0.22],
+    LowerArm_R: [-96 - s * 0.5, -54, -6],
+    Hand_R: [-8, 10, -4],
+  };
+}
+
+export const sixSevenKid = (): THREE.AnimationClip =>
+  compileClip('SixSevenKid', [
+    { t: 0, pose: {} },
+    { t: 0.16, pose: sym({ Chest: [4, 0, 0], Shoulder_L: [0, 0, -6] }), hips: [0, -0.02, 0], ease: 'out' },
+    // Le mani schizzano su: nessuna preparazione elegante, è uno scatto.
+    { t: 0.4, pose: kidShake(0), hips: [0, 0.03, 0], ease: 'overshoot' },
+    // Scuotimento irregolare: i tempi non sono equidistanti apposta.
+    { t: 0.62, pose: kidShake(26), hips: [0, 0.04, 0], ease: 'overshoot' },
+    { t: 0.8, pose: kidShake(-22), hips: [0, 0.015, 0], ease: 'overshoot' },
+    { t: 0.99, pose: kidShake(30), hips: [0, 0.045, 0], ease: 'overshoot' },
+    { t: 1.14, pose: kidShake(-26), hips: [0, 0.01, 0], ease: 'overshoot' },
+    { t: 1.35, pose: kidShake(32), hips: [0, 0.05, 0], ease: 'overshoot' },
+    { t: 1.5, pose: kidShake(-20), hips: [0, 0.02, 0], ease: 'overshoot' },
+    { t: 1.72, pose: kidShake(24), hips: [0, 0.04, 0], ease: 'overshoot' },
+    // Si ferma di colpo, mani ancora alte: la battuta è l'immobilità improvvisa.
+    { t: 2.0, pose: { ...kidShake(4), Jaw: [16, 0, 0] }, hips: [0, 0.03, 0], ease: 'out' },
+    { t: 2.4, pose: { ...kidShake(0), Jaw: [10, 0, 0] }, hips: [0, 0.025, 0] },
+    { t: 2.76, pose: sym({ UpperArm_L: [-10, -14, 4], LowerArm_L: [-40, 26, 3] }), ease: 'in' },
+    { t: 3.1, pose: {} },
+  ]);
+
+// ---------------------------------------------------------------------------
+// S7-11 Ma che vuoi — il gesto italiano
+// ---------------------------------------------------------------------------
+
+/**
+ * Avambracci alzati, mani spalancate, spalle su: il «ma che vuoi?!».
+ *
+ * La prima versione usava le dita a pigna, che è la forma più nota del gesto.
+ * Non si leggeva: a questa distanza i polpastrelli che convergono occupano una
+ * quindicina di pixel e la mano sembra grattare il mento. La lezione, visibile
+ * confrontando le mosse rese una accanto all'altra, è che **conta la sagoma**:
+ * le mani a dita aperte si riconoscono, quelle chiuse su sé stesse no. Questa
+ * è l'altra forma dello stesso gesto, e una sagoma ce l'ha.
+ *
+ * `push` porta avanti gli avambracci e alza le spalle: è l'insistenza.
+ */
+function whatDoYouWant(push: number): Pose {
+  const u = push;
+  return {
+    ...SPREAD,
+    Hips: [0, 0, 0],
+    Spine: [-2, 0, 0],
+    Chest: [-4 - u * 0.06, 0, 0],
+    Neck: [3, 0, 0],
+    // Testa inclinata di lato: senza, è una domanda; con, è una protesta.
+    Head: [-2 - u * 0.1, 4, -11 - u * 0.1],
+    Jaw: [5 + u * 0.08, 0, 0],
+    Brow_L: [-20 - u * 0.12, 0, 0],
+    Brow_R: [-14 - u * 0.12, 0, 0],
+    Eye_L: [-3, 3, 0],
+    Eye_R: [-3, 3, 0],
+
+    // Mani all'altezza del petto e **distanti fra loro**, non accanto alla
+    // testa: in alto questa mossa si confonderebbe con S7-10 e S7-12, che
+    // hanno già le mani aperte su in quella zona. Qui a distinguerla sono le
+    // spalle alzate e l'inclinazione della testa, che in alto non si vedono.
+    Shoulder_L: [0, -8, 26 + u * 0.3],
+    UpperArm_L: [-30 - u * 0.2, -14, -20],
+    LowerArm_L: [-96 - u * 0.4, 58, 6],
+    Hand_L: [-6 - u * 0.2, -18, 10],
+
+    Shoulder_R: [0, 8, -26 - u * 0.3],
+    UpperArm_R: [-30 - u * 0.2, 14, 20],
+    LowerArm_R: [-96 - u * 0.4, -58, -6],
+    Hand_R: [-6 - u * 0.2, 18, -10],
+  };
+}
+
+export const whatDoYouWantMove = (): THREE.AnimationClip =>
+  compileClip('WhatDoYouWant', [
+    { t: 0, pose: {} },
+    { t: 0.2, pose: sym({ Chest: [3, 0, 0], Shoulder_L: [0, 0, -6] }), hips: [0, -0.016, 0], ease: 'out' },
+    // Le mani salgono già aperte: il gesto è la domanda, non la preparazione.
+    { t: 0.5, pose: whatDoYouWant(0), hips: [0, 0.012, 0], ease: 'overshoot' },
+    { t: 0.74, pose: whatDoYouWant(0), hips: [0, 0.01, 0] },
+    // Due spinte in avanti: la seconda più insistente. È il ritmo a dire
+    // «ma che vuoi» invece di un generico «boh».
+    { t: 0.96, pose: whatDoYouWant(30), hips: [0, 0.02, 0.012], ease: 'out' },
+    { t: 1.2, pose: whatDoYouWant(6), hips: [0, 0.012, 0.004] },
+    { t: 1.44, pose: whatDoYouWant(38), hips: [0, 0.024, 0.016], ease: 'overshoot' },
+    { t: 1.78, pose: whatDoYouWant(24), hips: [0, 0.018, 0.01] },
+    // Tiene, con le sopracciglia al massimo: è il fermo immagine.
+    { t: 2.2, pose: { ...whatDoYouWant(28), Brow_L: [-26, 0, 0], Brow_R: [-18, 0, 0] }, hips: [0, 0.02, 0.012] },
+    { t: 2.56, pose: sym({ Shoulder_L: [0, 0, 6], UpperArm_L: [-10, -16, -2], LowerArm_L: [-40, 28, 3] }), ease: 'in' },
+    { t: 2.9, pose: {} },
+  ]);
+
+// ---------------------------------------------------------------------------
+// S7-12 Mind Blown — la testa che esplode
+// ---------------------------------------------------------------------------
+
+/**
+ * Pugni alle tempie che si aprono in dita spalancate.
+ *
+ * L'esplosione sale in diagonale e non di lato: allargando le braccia le mani
+ * uscirebbero dall'inquadratura, come si è visto costruendo S7-07. `burst` da 0
+ * a 1 porta dai pugni chiusi alle dita aperte in alto.
+ */
+function mindBlown(burst: number): Pose {
+  const b = burst;
+  return {
+    ...(b > 0.5 ? SPREAD : FIST),
+    Hips: [0, 0, -b * 2],
+    Spine: [-b * 7, 0, 0],
+    Chest: [-4 - b * 9, 0, 0],
+    Neck: [2 + b * 3, 0, 0],
+    // La testa va all'indietro con l'esplosione: è il corpo a raccontarla.
+    Head: [4 - b * 16, 0, 0],
+    Jaw: [6 + b * 10, 0, 0],
+    Brow_L: [-10 - b * 14, 0, 0],
+    Brow_R: [-10 - b * 14, 0, 0],
+    Eye_L: [-b * 8, 0, 0],
+    Eye_R: [-b * 8, 0, 0],
+
+    // L'esplosione apre le dita e alza appena le mani, **senza allargarle**:
+    // con una spazzata laterale ampia le mani uscivano dal campo da entrambi i
+    // lati. Il racconto sta nelle dita che si spalancano e nella testa che
+    // rincula, non nell'apertura delle braccia.
+    Shoulder_L: [0, -4, 12 + b * 8],
+    UpperArm_L: [-56 - b * 8, -20 + b * 6, -2 + b * 16],
+    LowerArm_L: [-124 + b * 22, 48 + b * 10, 6],
+    Hand_L: [-10 - b * 8, -8, 4],
+
+    Shoulder_R: [0, 4, -12 - b * 8],
+    UpperArm_R: [-56 - b * 8, 20 - b * 6, 2 - b * 16],
+    LowerArm_R: [-124 + b * 22, -48 - b * 10, -6],
+    Hand_R: [-10 - b * 8, 8, -4],
+  };
+}
+
+export const mindBlownMove = (): THREE.AnimationClip =>
+  compileClip('MindBlown', [
+    { t: 0, pose: {} },
+    // I pugni salgono alle tempie e ci restano: è la carica.
+    { t: 0.3, pose: mindBlown(0), hips: [0, -0.01, 0], ease: 'out' },
+    { t: 0.62, pose: mindBlown(0), hips: [0, -0.012, 0] },
+    // Un ultimo affondo prima di esplodere.
+    { t: 0.8, pose: { ...mindBlown(0), Chest: [-1, 0, 0], Head: [8, 0, 0] }, hips: [0, -0.03, 0], ease: 'out' },
+    { t: 1.0, pose: mindBlown(1), hips: [0, 0.05, -0.02], ease: 'overshoot' },
+    { t: 1.3, pose: mindBlown(0.86), hips: [0, 0.035, -0.015] },
+    // Resta aperta: è il fermo immagine.
+    { t: 1.75, pose: mindBlown(0.94), hips: [0, 0.04, -0.018] },
+    { t: 2.15, pose: mindBlown(0.8), hips: [0, 0.03, -0.012] },
+    { t: 2.55, pose: sym({ UpperArm_L: [-8, -16, 8], LowerArm_L: [-38, 28, 3], Jaw: [4, 0, 0] }), ease: 'in' },
+    { t: 2.95, pose: {} },
+  ]);
