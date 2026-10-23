@@ -28,6 +28,22 @@ export interface AudioSample {
   aboveFloorDb: number;
 }
 
+/** Lettura istantanea, per l'indicatore a schermo. */
+export interface AudioReading {
+  /** Valore efficace corrente, 0..1. */
+  rms: number;
+  /** Rumore di fondo stimato. */
+  floor: number;
+  /** Guadagno sul fondo in dB: è il numero su cui si decide la reazione. */
+  aboveFloorDb: number;
+  /** Classe che uscirebbe campionando adesso. */
+  level: ReactionLevel;
+  /** Se il contesto audio sta davvero girando. */
+  running: boolean;
+  /** Se la stima del fondo è congelata (turno del giocatore). */
+  floorFrozen: boolean;
+}
+
 export interface AudioOptions {
   /** Guadagno sopra il fondo, in dB, per entrare in MEDIUM. */
   mediumDb?: number;
@@ -57,6 +73,8 @@ export class AudioReactionAnalyzer {
   private buffer: Float32Array = new Float32Array(0);
   private floorValue = SILENCE;
   private tracking = 0;
+  private currentRms = 0;
+  private floorFrozen = false;
 
   private readonly options: Required<AudioOptions>;
 
@@ -71,6 +89,15 @@ export class AudioReactionAnalyzer {
   /** Rumore di fondo stimato, per mostrarlo a schermo durante la taratura. */
   get floor(): number {
     return this.floorValue;
+  }
+
+  /**
+   * Soglie in vigore, in dB sopra il fondo. Le legge l'interfaccia per
+   * disegnare le tacche dell'indicatore: scriverle anche nel foglio di stile
+   * significherebbe tenerle allineate a mano a ogni ritaratura.
+   */
+  get thresholdsDb(): { medium: number; high: number } {
+    return { medium: this.options.mediumDb, high: this.options.highDb };
   }
 
   /**
@@ -95,6 +122,13 @@ export class AudioReactionAnalyzer {
       source.connect(analyser);
       this.analyser = analyser;
       this.buffer = new Float32Array(analyser.fftSize);
+
+      // Si riprende subito il contesto, non al primo campionamento. Il
+      // contesto nasce dopo un `await`, quindi fuori dal gesto dell'utente che
+      // ha premuto «gioca»: su iOS può restare sospeso, e finché lo è il
+      // segnale letto è muto — il fondo verrebbe stimato sul silenzio e poi
+      // qualunque suono risulterebbe un'esplosione.
+      await this.context.resume().catch(() => undefined);
       return true;
     } catch {
       this.dispose();
@@ -127,13 +161,50 @@ export class AudioReactionAnalyzer {
     return Math.sqrt(sum / this.buffer.length);
   }
 
-  /** Tiene aggiornata la stima del fondo mentre non si sta campionando. */
+  /**
+   * Congela la stima del fondo. Va congelata per tutto il turno del giocatore,
+   * non solo durante il campionamento: inseguire il fondo mentre è il
+   * giocatore a fare rumore lo alza fino a quasi raggiungerlo — con la
+   * costante di salita di 0,25/s, dodici secondi di turno bastano a coprire il
+   * 95% della distanza. Il campionamento successivo troverebbe allora un
+   * guadagno vicino a zero e classificherebbe `low` anche una reazione forte:
+   * l'avatar farebbe la faccia delusa proprio a chi si è sbracciato di più.
+   */
+  setFloorFrozen(frozen: boolean): void {
+    this.floorFrozen = frozen;
+  }
+
+  /** Tiene aggiornata la stima del fondo e la lettura corrente. */
   track(dt: number): void {
     if (!this.analyser) return;
     this.tracking += dt;
     if (this.tracking < 0.05) return;
-    this.updateFloor(this.readRms(), this.tracking);
+    const rms = this.readRms();
+    this.currentRms = rms;
+    if (!this.floorFrozen) this.updateFloor(rms, this.tracking);
     this.tracking = 0;
+  }
+
+  /** Lettura istantanea per l'indicatore: non altera nessuno stato. */
+  read(): AudioReading {
+    const floor = this.floorValue;
+    const aboveFloorDb =
+      20 * Math.log10(Math.max(this.currentRms, SILENCE) / Math.max(floor, SILENCE));
+    return {
+      rms: this.currentRms,
+      floor,
+      aboveFloorDb,
+      level: this.classify(aboveFloorDb),
+      running: this.context?.state === 'running',
+      floorFrozen: this.floorFrozen,
+    };
+  }
+
+  private classify(aboveFloorDb: number): ReactionLevel {
+    if (!this.analyser) return 'unknown';
+    if (aboveFloorDb >= this.options.highDb) return 'high';
+    if (aboveFloorDb >= this.options.mediumDb) return 'medium';
+    return 'low';
   }
 
   /**
@@ -170,11 +241,7 @@ export class AudioReactionAnalyzer {
     const rms = count > 0 ? sum / count : 0;
     const aboveFloorDb = 20 * Math.log10(Math.max(rms, SILENCE) / Math.max(floor, SILENCE));
 
-    let level: ReactionLevel = 'low';
-    if (aboveFloorDb >= this.options.highDb) level = 'high';
-    else if (aboveFloorDb >= this.options.mediumDb) level = 'medium';
-
-    return { level, rms, peak, floor, aboveFloorDb };
+    return { level: this.classify(aboveFloorDb), rms, peak, floor, aboveFloorDb };
   }
 
   dispose(): void {

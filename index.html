@@ -15,10 +15,28 @@
 
         <p id="fps" class="fps" aria-hidden="true">— fps</p>
 
-        <!-- Anteprima della telecamera: riscontro che il giocatore è inquadrato. -->
-        <div id="camera" class="camera is-hidden">
-          <div id="camera-slot" class="camera-slot"></div>
-          <div class="motion"><div id="motion-bar" class="motion-bar"></div></div>
+        <!-- Riscontro sui sensori, in basso a sinistra: che cosa l'applicazione
+             sta effettivamente vedendo e sentendo. -->
+        <div class="sensors">
+          <!-- Anteprima della telecamera: riscontro che il giocatore è inquadrato. -->
+          <div id="camera" class="camera is-hidden">
+            <div id="camera-slot" class="camera-slot"></div>
+            <div class="motion"><div id="motion-bar" class="motion-bar"></div></div>
+          </div>
+
+          <!-- Livello audio con le soglie in vista: serve a capire se il verso
+               è bastato, non solo che il microfono funziona. -->
+          <div id="audio" class="audio is-hidden">
+            <div class="audio-head">
+              <span class="audio-label">Voce</span>
+              <span id="audio-db" class="audio-db">—</span>
+            </div>
+            <div class="audio-track">
+              <div id="audio-bar" class="audio-bar"></div>
+              <span class="audio-mark audio-mark-medium"></span>
+              <span class="audio-mark audio-mark-high"></span>
+            </div>
+          </div>
         </div>
 
         <!-- Aura dell'avatar: a zero vince il giocatore, al massimo l'avatar. -->

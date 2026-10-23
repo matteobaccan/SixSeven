@@ -41,6 +41,17 @@ const HINTS: Record<GameState, string> = {
   PAUSED: 'In pausa',
 };
 
+/** Fondo scala dell'indicatore audio, in dB sopra il rumore di fondo. */
+const AUDIO_SCALE_DB = 20;
+
+/** Colore della barra audio per classe: lo stesso linguaggio dell'aura. */
+const AUDIO_COLOR: Record<string, string> = {
+  low: 'var(--ink-soft)',
+  medium: '#7fae5a',
+  high: '#f0a830',
+  unknown: 'var(--line)',
+};
+
 /**
  * Colore della barra dell'aura, interpolato fra le stesse tre tappe usate
  * dall'alone in scena (`AuraHalo`): freddo quando l'aura sta finendo, verde a
@@ -78,6 +89,9 @@ export class UIController {
       'camera',
       'camera-slot',
       'motion-bar',
+      'audio',
+      'audio-bar',
+      'audio-db',
       'done',
       'pause',
       'resume',
@@ -216,6 +230,39 @@ export class UIController {
 
   showCamera(on: boolean): void {
     this.el['camera'].classList.toggle('is-hidden', !on);
+  }
+
+  /**
+   * Tacche delle soglie audio, in percentuale della scala. Arrivano
+   * dall'analizzatore: il foglio di stile ha dei valori di ripiego, ma quelli
+   * veri li sa solo chi classifica.
+   */
+  setAudioThresholds(medium: number, high: number): void {
+    const el = this.el['audio'];
+    el.style.setProperty('--mark-medium', `${(medium / AUDIO_SCALE_DB) * 100}%`);
+    el.style.setProperty('--mark-high', `${(high / AUDIO_SCALE_DB) * 100}%`);
+  }
+
+  showAudio(on: boolean): void {
+    this.el['audio'].classList.toggle('is-hidden', !on);
+  }
+
+  /** Evidenzia l'indicatore mentre l'applicazione sta misurando davvero. */
+  setAudioSampling(on: boolean): void {
+    this.el['audio'].classList.toggle('is-sampling', on);
+  }
+
+  /**
+   * Livello audio corrente. Si mostra il guadagno sul fondo e non il volume
+   * assoluto, perché è quel numero a decidere la reazione: in una stanza
+   * rumorosa un volume alto non vuol dire niente.
+   */
+  setAudio(aboveFloorDb: number, level: string, running: boolean): void {
+    const clamped = Math.max(0, Math.min(AUDIO_SCALE_DB, aboveFloorDb));
+    this.el['audio-bar'].style.width = `${(clamped / AUDIO_SCALE_DB) * 100}%`;
+    this.el['audio-bar'].style.backgroundColor = AUDIO_COLOR[level] ?? 'var(--ink-soft)';
+    this.el['audio-db'].textContent = running ? `+${Math.round(clamped)} dB` : 'fermo';
+    this.el['audio'].classList.toggle('is-muted', !running);
   }
 
   setMotion(value: number): void {

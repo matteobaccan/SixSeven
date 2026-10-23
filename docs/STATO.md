@@ -125,6 +125,41 @@ collo di bottiglia misurato lo giustifica.
 
 ## Note tecniche non ovvie
 
+**Il rumore di fondo non si insegue durante il turno del giocatore.** La stima
+del fondo serve a misurare quanto una reazione *si stacca* dall'ambiente, e
+inseguirla in continuo sembrava giusto. Non lo era: durante il turno è il
+giocatore a fare rumore, e con la costante di salita di 0,25/s dodici secondi
+bastano a coprire il 95% della distanza fra il fondo e il livello che sta
+producendo lui. Il campionamento subito dopo trovava quindi un guadagno vicino
+a zero e classificava `low` anche una reazione forte: l'avatar faceva la faccia
+delusa proprio a chi si era sbracciato di più. Ora la stima si congela per
+tutta la fase del giocatore, non solo durante la finestra di campionamento.
+
+**Il contesto audio si riprende all'avvio, non al primo campionamento.**
+L'`AudioContext` nasce dopo l'`await` di `getUserMedia`, quindi fuori dal gesto
+dell'utente che ha premuto «gioca»: su iOS può restare sospeso. Finché lo è, il
+segnale letto è muto, il fondo viene stimato sul silenzio, e al primo
+`resume()` qualunque suono risulta un'esplosione. Il `resume()` è stato
+spostato dentro `request()`, e l'indicatore a schermo dice «fermo» invece di
+mostrare zero se il contesto non gira.
+
+**L'indicatore audio mostra il guadagno sul fondo, non il volume.** È quel
+numero a decidere la reazione, ed è l'unico che dica qualcosa in una stanza
+rumorosa. Porta due tacche fisse dove cominciano MEDIUM e HIGH, perché la
+domanda del giocatore non è «mi sente?» ma «è bastato?»; le soglie arrivano
+dall'analizzatore e non sono riscritte nel foglio di stile.
+
+**Il rilevamento analizza i fotogrammi, non i tick dell'orologio.** Il
+campionamento gira a 20 Hz, ma una telecamera può consegnare molto meno: poca
+luce, un telefono che risparmia batteria, un flusso a scatti. Analizzando a
+ogni tick, un campione su due confrontava due fotogrammi **identici** e
+misurava zero movimento; siccome `startFrames` chiede campioni consecutivi
+sopra soglia, l'alternanza «valore buono, zero, valore buono» azzerava il
+conteggio a ogni giro e l'inizio del gesto non veniva **mai** dichiarato. Ora
+`sample` salta i fotogrammi già visti confrontando `video.currentTime`. Era un
+difetto vero — con una telecamera lenta il gioco non si sarebbe accorto di
+niente — e l'ha trovato `tools/visual/motion.mjs`, non un controllo headless.
+
 **L'immobilità si giudica dall'evento, non dal numero.** L'aura riconosce il
 giocatore che non ha giocato da `movementSeen`, cioè dal fatto che il
 rilevamento abbia dichiarato l'inizio del movimento, non dall'agitazione
