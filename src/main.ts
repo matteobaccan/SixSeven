@@ -81,6 +81,7 @@ async function boot(): Promise<void> {
     onReset: () => renderer.resetOrientation(),
     onRestart: () => {
       ui.hideMatchOver();
+      ui.setFreePlayEnabled(false);
       machine?.send({ type: 'RESTART' });
     },
   });
@@ -235,6 +236,9 @@ async function boot(): Promise<void> {
         return;
       case 'match-over':
         ui.setMove(null);
+        // A partita finita il repertorio torna disponibile, e con esso il
+        // pannello di diagnostica: è il momento in cui lo si va a leggere.
+        ui.setFreePlayEnabled(true);
         ui.showMatchOver(
           intent.winner === 'player' ? 'Hai vinto!' : 'Vince l’avatar',
           intent.winner === 'player'

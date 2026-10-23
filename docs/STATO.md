@@ -125,6 +125,23 @@ collo di bottiglia misurato lo giustifica.
 
 ## Note tecniche non ovvie
 
+**La texture esporta solo la regione usata.** Dei 540x773 pixel disegnati, la
+faccia ne usa meno della metà: il resto erano 278 kB scaricati per niente. Il
+ritaglio è l'**ultimo** passo della costruzione, perché tutte le elaborazioni
+— righe del colletto, uniformatura del collo, contorno della mascella — sono
+misurate nel sistema di coordinate dell'originale e lì devono restare. Le UV
+sono riferite alla regione esportata, e il margine di 3 pixel attorno serve
+perché ai bordi il filtraggio bilineare campiona appena fuori.
+
+**Il GLB è compresso con meshopt.** Misurato su questo modello: meshopt 334 kB,
+Draco 688 kB, sola quantizzazione 909 kB, non compresso 1233 kB. Una nota
+precedente diceva che Draco «servirebbe poco» perché comprime la geometria
+mentre qui un terzo del file sono animazioni: era troppo netta — Draco toglie
+il 44%, solo che meshopt ne toglie il 73% e il suo decodificatore arriva con
+three e pesa una ventina di kB contro i circa 200 del wasm di Draco. La
+compressione è deterministica, verificata su build ripetute, quindi il
+controllo in CI sull'avatar versionato continua a valere.
+
 **Il rumore di fondo non si insegue durante il turno del giocatore.** La stima
 del fondo serve a misurare quanto una reazione *si stacca* dall'ambiente, e
 inseguirla in continuo sembrava giusto. Non lo era: durante il turno è il
@@ -244,16 +261,14 @@ Noti dal lavoro fatto, da rifinire:
   altri disegni o un volto modellato;
 - la mano chiusa legge come un blocco unico: va separata meglio nelle falangi;
 - le gambe restano lunghe per una proporzione pienamente caricaturale;
-- il primo caricamento pesa circa 1,7 MB, e le due voci grosse sono il GLB
-  (1077 kB: 555 di geometria, 362 di animazioni, 160 di JSON) e `face.png`
-  (493 kB). Vanno affrontate in modo diverso: su `avatar.glb` **Draco servirebbe
-  poco**, perché comprime la geometria e qui un terzo del file sono tracce di
-  animazione — serve `meshopt`/`gltfpack`, che le comprime entrambe. Su
-  `face.png` il margine è maggiore e costa meno: l'immagine è disegnata a tinte
-  piatte e si usa solo il ritaglio `FACE_CROP`, quindi ritagliarla in fase di
-  build o passare a WebP la ridurrebbe di molto. Il ritaglio però va in coppia
-  con le UV in `tools/avatar/face.ts`, ed è il punto appena sistemato del
-  contorno: da fare con una verifica visiva accanto.
+- il primo caricamento è sceso da ~1,7 MB a **720 kB in transito**, ma la voce
+  più pesante è ora `face.png` con 221 kB, che il PNG non comprime oltre.
+  Quantizzarla a 255 colori la porterebbe a 24 kB — misurato — con un errore
+  medio di 1,9 su 255, invisibile. Il problema è l'**alfa**: l'errore arriva a
+  25, e con `alphaTest` a 0,5 significa spostare il contorno del viso di un
+  pixel, cioè il dettaglio su cui si è lavorato di più. Si farebbe quantizzando
+  il solo RGB e lasciando l'alfa intatta, il che richiede un quantizzatore in
+  Node — `pngjs` non ne ha uno. Da valutare se i 197 kB valgono quel codice.
 
 ## Prossimo passo
 

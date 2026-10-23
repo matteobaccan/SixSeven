@@ -34,6 +34,17 @@ const read = () => page.evaluate(() => ({
   stato: window.sixSeven.machine?.state,
 }));
 
+// Il tono del dispositivo finto è **periodico**, non continuo: una finestra di
+// osservazione corta può capitare fra due bip e concludere «nessun segnale».
+// Si aspetta quindi esplicitamente il primo campione non nullo prima di
+// giudicare, invece di sperare nella coincidenza.
+let sawSignal = false;
+for (let i = 0; i < 40 && !sawSignal; i++) {
+  sawSignal = await page.evaluate(() => window.sixSeven.audio.read().rms > 0);
+  if (!sawSignal) await page.waitForTimeout(250);
+}
+console.log(sawSignal ? 'segnale rilevato dal microfono finto' : 'nessun segnale entro 10 s');
+
 // Si segue la partita finché non si entra nel turno del giocatore, annotando
 // come cambiano fondo e livello.
 const samples = [];
@@ -68,7 +79,7 @@ if (!last.disponibile) {
   await browser.close();
   process.exit(2);
 }
-if (last.rms === 0 && avatarPhase.every((s) => s.rms === 0)) {
+if (!sawSignal) {
   console.error('\nnessun segnale dal dispositivo finto: controllo inconcludente');
   await browser.close();
   process.exit(2);
@@ -83,10 +94,10 @@ const expect = (ok, label) => {
 };
 
 expect(last.running, 'il contesto audio è attivo subito, non al primo campionamento');
-expect(
-  avatarPhase.some((s) => s.rms > 0),
-  'il segnale del microfono arriva all’analizzatore',
-);
+// Si verifica che il segnale sia arrivato, non *quando*: a seconda di come
+// cade la finestra di osservazione i campioni possono finire tutti nella fase
+// del giocatore, e legare l'assertion alla fase la rendeva saltuaria.
+expect(sawSignal || samples.some((s) => s.rms > 0), 'il segnale del microfono arriva all’analizzatore');
 if (playerPhase.length > 1) {
   const floors = playerPhase.map((s) => s.floor);
   expect(

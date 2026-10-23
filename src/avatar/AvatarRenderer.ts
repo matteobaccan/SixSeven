@@ -35,6 +35,7 @@ import {
   CircleGeometry,
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { ToonLinePass } from './ToonLinePass.ts';
 
 export interface LoadedAvatar {
@@ -235,9 +236,15 @@ export class AvatarRenderer {
 
   async load(url: string, onProgress?: (ratio: number) => void): Promise<LoadedAvatar> {
     const [gltf, faceTexture] = await Promise.all([
-      new GLTFLoader().loadAsync(url, (event) => {
-        if (event.lengthComputable && onProgress) onProgress(event.loaded / event.total);
-      }),
+      // Il GLB è compresso con meshopt: senza decodificatore il caricamento
+      // fallisce con un errore sull'estensione mancante, non con un modello
+      // vuoto. Il decodificatore arriva con three e pesa una ventina di kB,
+      // contro i 900 che la compressione fa risparmiare sul modello.
+      new GLTFLoader()
+        .setMeshoptDecoder(MeshoptDecoder)
+        .loadAsync(url, (event) => {
+          if (event.lengthComputable && onProgress) onProgress(event.loaded / event.total);
+        }),
       this.options.faceTextureUrl
         ? new TextureLoader().loadAsync(this.options.faceTextureUrl)
         : Promise.resolve(null),

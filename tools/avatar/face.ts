@@ -45,6 +45,26 @@ export const FACE_SCALE = 0.6 / (FACE_CROP.x1 - FACE_CROP.x0 - 24);
  * senza spostare il corpo: insieme all'arco del mento regola la distanza fra i
  * due.
  */
+/**
+ * Margine attorno alla regione usata, in pixel dell'immagine sorgente.
+ *
+ * La texture esportata è `FACE_CROP` allargato di questo margine, non
+ * l'immagine intera: dei 540x773 originali se ne usa meno della metà, e il
+ * resto erano 285 kB scaricati per niente. Il margine serve perché ai bordi il
+ * filtraggio bilineare campiona anche appena fuori dalla regione mappata;
+ * senza, prenderebbe il pixel di bordo ripetuto e il contorno del viso
+ * cambierebbe di un pixel — proprio il dettaglio più lavorato.
+ */
+export const FACE_TEXTURE_MARGIN = 3;
+
+/** Regione dell'immagine sorgente effettivamente esportata nella texture. */
+export const FACE_TEXTURE_CROP = {
+  x0: Math.max(0, FACE_CROP.x0 - FACE_TEXTURE_MARGIN),
+  y0: Math.max(0, FACE_CROP.y0 - FACE_TEXTURE_MARGIN),
+  x1: Math.min(FACE_IMAGE.width, FACE_CROP.x1 + FACE_TEXTURE_MARGIN),
+  y1: Math.min(FACE_IMAGE.height, FACE_CROP.y1 + FACE_TEXTURE_MARGIN),
+} as const;
+
 export const CHIN_Y = 1.547;
 
 /** Profondità della superficie al centro e rientro ai bordi (dà volume). */

@@ -101,6 +101,7 @@ export class UIController {
       'reactions',
       'planned',
       'diagnostics',
+      'extra',
       'reset',
       'fps',
       'aura',
@@ -307,8 +308,19 @@ export class UIController {
   }
 
   /** Durante una partita la riproduzione libera resta visibile ma inattiva. */
+  /**
+   * Abilita il repertorio riproducibile a mano e, con esso, la visibilità del
+   * pannello di diagnostica.
+   *
+   * Durante la partita il pannello è inerte — i pulsanti sono disabilitati —
+   * e su un telefono il solo sommario costava una trentina di punti di altezza
+   * sottratti alla scena. Si nasconde del tutto mentre si gioca e torna a fine
+   * partita, quando serve davvero: è lì che si va a leggere cosa ha
+   * riconosciuto il motore.
+   */
   setFreePlayEnabled(enabled: boolean): void {
     for (const button of this.moveButtons) button.disabled = !enabled;
+    this.el['extra'].classList.toggle('is-hidden', !enabled);
   }
 
   renderDiagnostics(report: AvatarReport, naming: NamingResult): void {

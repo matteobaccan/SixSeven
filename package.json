@@ -1,12 +1,13 @@
 {
   "name": "six-seven",
   "version": "0.1.0",
-  "description": "Six Seven — web app interattiva con avatar 3D (prototipo Fase 1)",
+  "description": "Six Seven \u2014 web app interattiva con avatar 3D (prototipo Fase 1)",
   "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build:avatar": "tsx tools/build-avatar.ts",
+    "build:avatar": "tsx tools/build-avatar.ts && npm run compress:avatar",
+    "compress:avatar": "gltf-transform meshopt public/assets/avatar.glb public/assets/avatar.glb",
     "typecheck": "tsc --build --force",
     "build": "npm run build:avatar && npm run typecheck && npm run check:naming && npm run check:game && vite build",
     "preview": "vite preview",
@@ -17,6 +18,7 @@
     "three": "0.169.0"
   },
   "devDependencies": {
+    "@gltf-transform/cli": "^4.5.1",
     "@types/node": "^22.9.0",
     "@types/pngjs": "^6.0.5",
     "@types/three": "0.169.0",

@@ -17,6 +17,7 @@
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { PNG } from 'pngjs';
+import { FACE_TEXTURE_CROP } from './face.ts';
 
 /** Righe interessate dall'uniformatura dell'incarnato del collo. */
 const NECK_ROWS = { from: 404, to: 452 } as const;
@@ -52,9 +53,28 @@ function isInk(r: number, g: number, b: number): boolean {
   return r + g + b < 130;
 }
 
+/** Copia una regione rettangolare in una nuova immagine. */
+function cropTo(
+  png: PNG,
+  region: { x0: number; y0: number; x1: number; y1: number },
+): PNG {
+  const width = region.x1 - region.x0;
+  const height = region.y1 - region.y0;
+  const out = new PNG({ width, height });
+  for (let y = 0; y < height; y++) {
+    const from = (png.width * (region.y0 + y) + region.x0) << 2;
+    png.data.copy(out.data, (width * y) << 2, from, from + (width << 2));
+  }
+  return out;
+}
+
 export function buildFaceTexture(sourcePath: string, outputPath: string): {
+  /** Dimensioni della texture esportata, cioè della sola regione usata. */
   width: number;
   height: number;
+  /** Dimensioni dell'immagine sorgente, in cui sono misurate le elaborazioni. */
+  sourceWidth: number;
+  sourceHeight: number;
   changed: number;
   erased: number;
 } {
@@ -120,6 +140,18 @@ export function buildFaceTexture(sourcePath: string, outputPath: string): {
     }
   }
 
-  writeFileSync(outputPath, PNG.sync.write(png));
-  return { width: png.width, height: png.height, changed, erased };
+  // Si esporta solo la regione usata dalla faccia, non l'immagine intera: le
+  // elaborazioni qui sopra lavorano nel sistema di coordinate dell'originale —
+  // le righe del colletto e del collo sono misurate lì — quindi il ritaglio è
+  // l'ultimo passo, dopo che tutto è stato fatto.
+  const cropped = cropTo(png, FACE_TEXTURE_CROP);
+  writeFileSync(outputPath, PNG.sync.write(cropped));
+  return {
+    width: cropped.width,
+    height: cropped.height,
+    sourceWidth: png.width,
+    sourceHeight: png.height,
+    changed,
+    erased,
+  };
 }
