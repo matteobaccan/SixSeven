@@ -1,5 +1,9 @@
 # Istruzioni per Claude Code
 
+Qui ci sono le **regole operative**. Per l'orientamento — vincoli duri del
+modello e dell'inquadratura, difetti noti dei sensori, perché le scelte sono
+quelle — vedi `AGENTS.md`, che è scritto per ripartire a memoria piena.
+
 ## Commit
 
 I commit sono firmati **solo** da Matteo Baccan:

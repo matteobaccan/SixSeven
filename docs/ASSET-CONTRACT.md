@@ -129,7 +129,11 @@ Le clip vanno **dentro il GLB**, con questi nomi esatti:
 | S7-08 | `ThreePointer` | realizzata | tiro da tre, poi la bilancia |
 | S7-10 | `SixSevenKid` | realizzata | mani alte e scomposte |
 | S7-11 | `WhatDoYouWant` | realizzata | mani aperte, spalle su |
+| S7-09 | `Blessing` | realizzata | la benedizione che crolla nella bilancia |
 | S7-12 | `MindBlown` | realizzata | pugni alle tempie che si aprono |
+| RX-07 | `Applause` | realizzata | batte le mani |
+| RX-08 | `NotBad` | realizzata | cenno del capo, approvazione tiepida |
+| RX-09 | `ArmsCrossed` | realizzata | braccia incrociate, non impressionato |
 | RX-03 | `Celebration` | realizzata | |
 | RX-04 | `Disappointed` | realizzata | |
 | RX-06 | `TurnTransition` | realizzata | |

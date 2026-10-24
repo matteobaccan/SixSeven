@@ -9,7 +9,7 @@ sono state prese e cosa resta aperto.
 | --- | --- |
 | L'avatar 3D è caricato nel browser | sì |
 | Il modello è dotato di uno scheletro utilizzabile | sì, 48 bone |
-| Almeno tre animazioni riproducibili | sì, **diciassette**: undici mosse e sei reazioni |
+| Almeno tre animazioni riproducibili | sì, **ventuno**: dodici mosse e nove reazioni |
 | Transizioni senza salti evidenti | sì — ogni clip apre e chiude sulla posa di riposo, con crossfade |
 | Il gioco alterna correttamente i turni | sì |
 | La telecamera consente di stimare la fine della mossa | sì, per differenza fra fotogrammi |
@@ -124,6 +124,20 @@ macchina a stati e come quella privo di dipendenze dal browser.
 collo di bottiglia misurato lo giustifica.
 
 ## Note tecniche non ovvie
+
+**La mano non raggiunge gli occhi.** Spalla a 1,268, due segmenti da 0,278: la
+punta delle dita arriva a circa 1,92, mentre gli occhi del disegno stanno fra
+1,95 e 2,05. Il facepalm — il gesto più ovvio per la fascia bassa — non è
+realizzabile: una mano che si ferma al mento legge come un gesto pensieroso, non
+come resa. È il prezzo del trucco del burattino, testa grande e sospesa in alto
+con il braccio di un corpo normale. RX-09 è diventata «braccia conserte», che
+sta all'altezza del petto dove la portata abbonda.
+
+**Le reazioni si vedono più delle mosse.** Una per turno, quattro-otto a
+partita, mentre una mossa torna solo a mazzo esaurito: con una sola preferenza
+per fascia sonora, `pickReaction` — che scarta quella appena usata — ricadeva
+sempre sulla seconda scelta. Da lì veniva il senso di ripetizione, non dalle
+mosse. Ogni fascia ne elenca ora almeno tre.
 
 **Nei gesti conta la sagoma, non il dettaglio delle dita.** Il gesto italiano
 era stato costruito con le dita a pigna, che è la sua forma più nota. Non si

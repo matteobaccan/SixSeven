@@ -6,8 +6,8 @@
  * documentate in poses.ts.
  */
 import type * as THREE from 'three';
-import { compileClip, sym } from './timeline.ts';
-import { OFFER, oneSide, OPEN_FINGERS, POINT, poke, SPREAD } from './poses.ts';
+import { compileClip, sym, type Pose } from './timeline.ts';
+import { FLAT, OFFER, oneSide, OPEN_FINGERS, POINT, poke, SPREAD } from './poses.ts';
 
 // ---------------------------------------------------------------------------
 // RX-05 Idle — respiro, spostamento del peso e micro-movimenti
@@ -388,4 +388,179 @@ export const turnTransition = (): THREE.AnimationClip =>
     },
     { t: 1.1, pose: sym({ UpperArm_L: [0, -12, -4], LowerArm_L: [-24, 18, 2] }), ease: 'in' },
     { t: 1.4, pose: {} },
+  ]);
+
+// ---------------------------------------------------------------------------
+// RX-07 Applauso — reazione forte, alternativa alla festa
+// ---------------------------------------------------------------------------
+
+/**
+ * Mani che battono davanti al petto.
+ *
+ * Serve perché con quattro reazioni in rotazione — e una sola per fascia — si
+ * rivede sempre la stessa: le reazioni si vedono una per turno, quattro-otto a
+ * partita, mentre una mossa torna solo a mazzo esaurito. Il batter le mani ha
+ * una sagoma grande e inequivocabile, che è il criterio che conta a questa
+ * distanza.
+ *
+ * `clap` da 0 a 1 chiude le mani al centro.
+ */
+function clapping(clap: number): Pose {
+  const c = clap;
+  return {
+    ...SPREAD,
+    Spine: [-2 - c * 2, 0, 0],
+    Chest: [-4 - c * 3, 0, 0],
+    Neck: [2, 0, 0],
+    Head: [-2 - c * 3, 0, 0],
+    Jaw: [4 + c * 4, 0, 0],
+    Brow_L: [-18 - c * 4, 0, 0],
+    Brow_R: [-18 - c * 4, 0, 0],
+    Eye_L: [-4, 0, 0],
+    Eye_R: [-4, 0, 0],
+
+    // Le mani si avvicinano ruotando la spalla verso il centro, non
+    // traslando: è l'unico modo che un rig a rotazioni abbia di farle toccare.
+    Shoulder_L: [0, -6, 14],
+    UpperArm_L: [-46, -20 - c * 12, -6],
+    LowerArm_L: [-110, 58 + c * 10, 6],
+    Hand_L: [-6, -10 - c * 8, 6],
+
+    Shoulder_R: [0, 6, -14],
+    UpperArm_R: [-46, 20 + c * 12, 6],
+    LowerArm_R: [-110, -58 - c * 10, -6],
+    Hand_R: [-6, 10 + c * 8, -6],
+  };
+}
+
+export const applause = (): THREE.AnimationClip =>
+  compileClip('Applause', [
+    { t: 0, pose: {} },
+    { t: 0.26, pose: clapping(0), ease: 'overshoot' },
+    // Quattro battute, le prime due più rapide: un applauso non è un metronomo.
+    { t: 0.44, pose: clapping(1), ease: 'out' },
+    { t: 0.62, pose: clapping(0.1) },
+    { t: 0.8, pose: clapping(1), ease: 'out' },
+    { t: 1.0, pose: clapping(0.1) },
+    { t: 1.22, pose: clapping(1), ease: 'out' },
+    { t: 1.46, pose: clapping(0.15) },
+    { t: 1.68, pose: clapping(1), ease: 'out' },
+    { t: 1.94, pose: clapping(0.2) },
+    { t: 2.3, pose: sym({ UpperArm_L: [-10, -16, -2], LowerArm_L: [-40, 28, 3] }), ease: 'in' },
+    { t: 2.65, pose: {} },
+  ]);
+
+// ---------------------------------------------------------------------------
+// RX-08 Non male — approvazione tiepida, per la fascia media
+// ---------------------------------------------------------------------------
+
+/**
+ * Labbro in giù non si può fare — la bocca è disegnata — quindi il «non male»
+ * lo dicono il cenno del capo e le mani che si allargano appena, come chi
+ * concede un punto senza entusiasmo. È volutamente piccolo: la fascia media è
+ * quella in cui l'avatar non si sbilancia.
+ */
+const NOT_BAD: Pose = {
+  ...OPEN_FINGERS,
+  Spine: [-1, 0, 0],
+  Chest: [-3, 0, 0],
+  Neck: [2, 0, 0],
+  Head: [2, 6, -3],
+  Jaw: [3, 0, 0],
+  // Sopracciglia alzate e simmetriche: sorpresa contenuta, non ironia.
+  Brow_L: [-16, 0, 0],
+  Brow_R: [-16, 0, 0],
+  Eye_L: [-2, 4, 0],
+  Eye_R: [-2, 4, 0],
+
+  Shoulder_L: [0, -4, 10],
+  UpperArm_L: [-24, -18, -10],
+  LowerArm_L: [-84, 60, 4],
+  Hand_L: [-4, -10, 6],
+
+  Shoulder_R: [0, 4, -10],
+  UpperArm_R: [-24, 18, 10],
+  LowerArm_R: [-84, -60, -4],
+  Hand_R: [-4, 10, -6],
+};
+
+export const notBad = (): THREE.AnimationClip =>
+  compileClip('NotBad', [
+    { t: 0, pose: {} },
+    { t: 0.3, pose: NOT_BAD, ease: 'out' },
+    // Due cenni del capo, piccoli.
+    { t: 0.54, pose: { ...NOT_BAD, Head: [7, 6, -3], Neck: [4, 0, 0] } },
+    { t: 0.78, pose: { ...NOT_BAD, Head: [0, 6, -3] } },
+    { t: 1.0, pose: { ...NOT_BAD, Head: [6, 5, -2], Neck: [3, 0, 0] } },
+    { t: 1.28, pose: { ...NOT_BAD, Head: [2, 5, -2] } },
+    { t: 1.62, pose: NOT_BAD },
+    { t: 1.95, pose: sym({ UpperArm_L: [-6, -14, -4], LowerArm_L: [-30, 24, 2] }), ease: 'in' },
+    { t: 2.3, pose: {} },
+  ]);
+
+// ---------------------------------------------------------------------------
+// RX-09 Braccia conserte — reazione bassa, alternativa alla delusione
+// ---------------------------------------------------------------------------
+
+/**
+ * Braccia incrociate sul petto e sguardo di lato: non impressionato.
+ *
+ * Era nata come facepalm, che è il gesto più ovvio per questa fascia. Non è
+ * realizzabile: la spalla sta a 1,268, i due segmenti del braccio misurano
+ * 0,278 ciascuno, quindi la punta delle dita arriva a circa 1,92 — mentre gli
+ * occhi del disegno stanno fra 1,95 e 2,05. **La mano non raggiunge gli
+ * occhi**, e una mano che si ferma al mento legge come un gesto pensieroso,
+ * non come resa. È un limite del trucco del burattino: la testa è grande e
+ * sospesa in alto, e il braccio resta quello di un corpo normale.
+ *
+ * Le braccia conserte stanno invece tutte all'altezza del petto, dove la
+ * portata abbonda, e hanno una sagoma che si riconosce a colpo d'occhio —
+ * criterio che qui conta più dell'espressione, visto che il viso è disegnato.
+ */
+function arumsCrossed(fold: number): Pose {
+  const f = fold;
+  return {
+    // Dita unite e piatte: a ventaglio sembravano artigli aperti, mentre nelle
+    // braccia conserte le mani poggiano sul braccio opposto.
+    ...FLAT,
+    Spine: [1, 0, 0],
+    Chest: [2 + f * 2, 0, 0],
+    Neck: [1, -f * 4, 0],
+    // Sguardo di lato e mento appena su: è il «non mi hai convinto».
+    Head: [-2 - f * 3, -f * 14, f * 4],
+    Jaw: [1, 0, 0],
+    Brow_L: [8 + f * 6, 0, 0],
+    Brow_R: [2 + f * 4, 0, 0],
+    Eye_L: [0, -f * 10, 0],
+    Eye_R: [0, -f * 10, 0],
+
+    // Gli avambracci si incrociano davanti al petto: la rotazione su Y della
+    // spalla porta il gomito all'indietro e la mano verso il centro, e con
+    // entrambe le braccia è ciò che le fa sovrapporre.
+    // Incrocio all'altezza del **petto**, non della pancia: più in basso
+    // leggeva come mani giunte, che è un'altra cosa.
+    Shoulder_L: [0, -6 - f * 8, 10 + f * 10],
+    UpperArm_L: [-20 - f * 26, -16 - f * 26, -12 - f * 6],
+    LowerArm_L: [-78 - f * 40, 34 + f * 22, 4],
+    Hand_L: [-4, -6 - f * 12, 4],
+
+    Shoulder_R: [0, 6 + f * 8, -10 - f * 10],
+    UpperArm_R: [-20 - f * 18, 16 + f * 24, 12 + f * 6],
+    LowerArm_R: [-90 - f * 36, -34 - f * 20, -4],
+    Hand_R: [-4, 6 + f * 12, -4],
+  };
+}
+
+export const armsCrossed = (): THREE.AnimationClip =>
+  compileClip('ArmsCrossed', [
+    { t: 0, pose: {} },
+    // Le braccia si chiudono con calma: la fretta sarebbe fastidio, questa è
+    // indifferenza.
+    { t: 0.4, pose: arumsCrossed(0.5), ease: 'out' },
+    { t: 0.75, pose: arumsCrossed(1), ease: 'out' },
+    // Ci resta, e la durata è la battuta.
+    { t: 1.45, pose: arumsCrossed(1) },
+    { t: 1.95, pose: { ...arumsCrossed(1), Head: [-6, -16, 5] } },
+    { t: 2.35, pose: arumsCrossed(0.3), ease: 'in' },
+    { t: 2.75, pose: {} },
   ]);
