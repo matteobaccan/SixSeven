@@ -307,8 +307,11 @@ Noti dal lavoro fatto, da rifinire:
   altri disegni o un volto modellato;
 - la mano chiusa legge come un blocco unico: va separata meglio nelle falangi;
 - le gambe restano lunghe per una proporzione pienamente caricaturale;
-- il primo caricamento è sceso da ~1,7 MB a **751 kB in transito**, e la voce
-  più pesante resta `face.png` con 211,7 kB — già compressa al meglio che
+- il primo caricamento è sceso da ~1,7 MB a **804 kB in transito** — 428 di
+  modello, 211 di texture, 144 del chunk di three, 19 di applicazione. Il
+  modello è cresciuto di 35 kB con la benedizione e le tre reazioni: ogni clip
+  costa una decina di kB compressa, ed è il prezzo da mettere in conto per ogni
+  aggiunta al repertorio. La voce più comprimibile resta `face.png` con 211,7 kB — già compressa al meglio che
   `pngjs` sappia fare senza perdita (`deflateStrategy: 2`, misurato contro
   tutte le strategie e tutti i filtri). Quantizzarla a 255 colori la porterebbe
   a 24 kB, con un errore medio di 1,9 su 255, invisibile. Il problema è

@@ -71,12 +71,12 @@ Misurato sulla build attuale:
 
 | file | sul disco | in transito |
 |---|---:|---:|
-| `avatar.glb` (meshopt) | 334 kB | 334 kB |
-| `face.png` (ritagliata) | 221 kB | 221 kB |
+| `avatar.glb` (meshopt) | 428 kB | 428 kB |
+| `face.png` (ritagliata) | 211 kB | 211 kB |
 | chunk `three` | 579 kB | 144 kB |
-| applicazione (JS + CSS + HTML) | 57 kB | 18 kB |
+| applicazione (JS + CSS + HTML) | 58 kB | 19 kB |
 
-Il primo caricamento è di circa **720 kB**: Pages comprime i file di testo, non
+Il primo caricamento è di circa **804 kB**: Pages comprime i file di testo, non
 i binari, quindi GLB e PNG viaggiano come stanno sul disco. Il GLB di suo
 comprimerebbe a 136 kB, ma non è una leva che abbiamo noi.
 

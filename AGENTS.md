@@ -187,8 +187,9 @@ Conseguenze che mordono:
   rimuove la carta del viso, che dall'interno del documento glTF sembra
   inutilizzata perché il materiale glielo mette il renderer a runtime.
 
-Primo caricamento: circa **750 kB in transito**. Misurato, non stimato — il
-dettaglio è in `docs/RILASCIO.md`.
+Primo caricamento: circa **800 kB in transito**. Misurato, non stimato — il
+dettaglio è in `docs/RILASCIO.md`. Ogni clip aggiunta al repertorio costa una
+decina di kB compressa: va messo in conto.
 
 ## Decisioni da non rimettere in discussione senza motivo
 
