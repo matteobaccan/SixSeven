@@ -240,11 +240,13 @@ Il deploy può restare in coda diversi minuti in attesa di un runner: è normale
 è successo con attese fra i due e i nove minuti, e non è un problema del
 workflow. Il lavoro vero dura una quarantina di secondi.
 
-Una nota per chi rilascia da un agente in un container: la creazione dei tag
-può essere bloccata dall'ambiente — il push fallisce con *the remote end hung
-up unexpectedly* anche a fronte di credenziali valide per i rami, e gli
-strumenti GitHub possono avere le sole letture su tag e release. In quel caso
-il tag va fatto a mano; è un comando solo.
+Il tag non si crea da qui: lo crea il workflow **Release** (Actions → Release →
+*Run workflow*, senza argomenti). È nato da un limite dell'ambiente — da un
+agente in container il push dei rami funziona e quello dei tag risponde `403`,
+e gli strumenti GitHub disponibili hanno le sole letture su tag e release — ma
+è la strada migliore comunque: il workflow rifà la build sul commit che sta per
+taggare, e si ferma se `package.json` non combacia col tag o se il tag esiste
+già. Il dettaglio in `docs/RILASCIO.md`.
 
 ## I numeri da tarare, e dove stanno
 
@@ -318,8 +320,8 @@ Lo sviluppo passa da rami `claude/*`, con il deploy agganciato al merge in
   `git log --oneline origin/main..origin/<ramo>` *prima* di resettare, o con un
   `cherry-pick` dopo, se ci si accorge in tempo.
 - **La cancellazione di un ramo mergiato, da un agente in container, può essere
-  bloccata** dall'ambiente, come i tag (vedi la nota in «Rilasciare»): va fatta
-  a mano, o dall'interfaccia di GitHub. Prima di cancellare, la verifica che il
+  bloccata** dall'ambiente: va fatta a mano, o dal bottone che GitHub mostra
+  sulla pull request appena unita. Prima di cancellare, la verifica che il
   ramo non porti niente di nuovo è `git diff origin/main origin/<ramo>` vuoto —
   più solida di `--merged`, che risponde sulla cronologia e non sul contenuto.
 

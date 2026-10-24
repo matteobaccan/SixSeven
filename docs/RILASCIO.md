@@ -50,15 +50,33 @@ La versione sta in `package.json` e si annota con un tag sul commit di merge.
 **Il tag non innesca il deploy** — che segue `main` e parte dal merge — ma dà
 un riferimento preciso a cui tornare.
 
+Il tag lo crea il workflow **Release**: scheda Actions → Release → *Run
+workflow*, senza argomenti. Prende la versione da `package.json`, rifà la build
+sul commit che sta per taggare, crea il tag annotato e apre la release con le
+note generate.
+
+Il campo `version` del workflow è facoltativo, e serve solo a dichiarare quale
+versione si crede di rilasciare: se non combacia con `package.json`, il
+workflow si ferma invece di taggare. Si ferma anche se il tag esiste già — un
+tag pubblicato non si sposta, si alza la versione.
+
+A mano funziona uguale, quando si ha il permesso di spingere i tag:
+
 ```bash
 git fetch origin main
 git tag -a v1.0.0 origin/main -m "Six Seven 1.0.0"
 git push origin v1.0.0
 ```
 
+Il workflow esiste perché quel permesso non è scontato: da un agente in
+container il push dei rami funziona e quello dei tag risponde `403`. Dentro
+Actions il token ha `contents: write`, e il problema non si pone.
+
 Il numero va alzato **nello stesso commit** che prepara il rilascio, non dopo:
 un tag che punta a un `package.json` con la versione precedente è una
-discrepanza che salta fuori mesi dopo, quando nessuno ricorda perché.
+discrepanza che salta fuori mesi dopo, quando nessuno ricorda perché. È anche
+il controllo che il workflow applica, quindi un `package.json` non allineato
+non fa un rilascio a metà: non ne fa nessuno.
 
 Cosa significano i numeri qui: la minore sale quando cambia il repertorio o una
 meccanica di gioco, la patch quando si correggono difetti o peso. La maggiore è
