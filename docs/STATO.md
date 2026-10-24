@@ -18,12 +18,21 @@ sono state prese e cosa resta aperto.
 | Le reazioni variano in base agli indicatori audio | sì |
 | Il gioco rimane utilizzabile senza microfono | sì, ed è una scelta esplicita all'avvio |
 | Video e audio non registrati né inviati a un server | sì |
-| Funziona su smartphone e tablet di riferimento | **da verificare su dispositivi reali** |
+| Funziona su smartphone e tablet di riferimento | smartphone **sì**, provato su iPhone in Safari e nel browser dentro un'app; tablet non ancora |
 
-L'unico criterio non spuntato richiede dispositivi fisici. Tutto il resto è
-verificato: la logica dei turni da `npm run check:game`, il ciclo completo nel
-browser con telecamera e microfono finti, il rilevamento del movimento con una
-sorgente controllata.
+Undici criteri su dodici sono pieni; il dodicesimo è soddisfatto per lo
+smartphone — provato su iPhone, in Safari e nel browser dentro un'app, dove si
+sono trovati e corretti il taglio laterale dell'avatar e l'ingombro del
+pannello — e resta scoperto per il tablet.
+
+Il resto è verificato: la logica dei turni e l'aura da `npm run check:game`, il
+ciclo completo nel browser con telecamera e microfono finti, il rilevamento del
+movimento e l'audio con sorgenti controllate (`tools/visual/`).
+
+Quello che **non** è ancora stato fatto, e che nessun controllo può sostituire,
+è una partita con una persona che si sbraccia davvero davanti alla telecamera:
+è da lì che usciranno le soglie definitive del rilevamento e il passo giusto
+dell'aura.
 
 ## Fasi
 
