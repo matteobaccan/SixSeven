@@ -5,9 +5,21 @@ settimane. Non ripete quello che si legge nel codice: raccoglie **i vincoli duri
 scoperti sbattendoci contro** e il perché delle scelte, che è l'unica parte che
 un file sorgente non racconta.
 
-Le regole operative stanno in `CLAUDE.md` (commit, build, asset). Lo stato
-puntuale e i punti aperti in `docs/STATO.md`. La specifica originale in
-`docs/SPEC.md`. Qui c'è l'orientamento.
+Quale documento risponde a quale domanda:
+
+| domanda | documento |
+|---|---|
+| cosa doveva fare il gioco | `docs/SPEC.md` — la specifica originale, non modificata |
+| **perché** le cose sono come sono | `docs/STATO.md`, sezione «Decisioni prese»: undici scelte con la ragione per esteso |
+| cosa è fatto e cosa no | `docs/STATO.md`, criteri di accettazione e punti aperti |
+| cosa non si può fare, e perché | questo documento, «I vincoli duri» |
+| come si committa, costruisce, rilascia | `CLAUDE.md` e `docs/RILASCIO.md` |
+| cosa serve per sostituire il modello 3D | `docs/ASSET-CONTRACT.md` |
+| come si verifica nel browser | `tools/visual/README.md` |
+
+Le decisioni in `STATO.md` sono numerate e portano la ragione, non solo
+l'esito: è la parte da leggere **prima** di rimettere in discussione qualcosa,
+perché quasi tutte nascono da un tentativo fallito che è ancora in cronologia.
 
 ---
 
@@ -233,6 +245,83 @@ può essere bloccata dall'ambiente — il push fallisce con *the remote end hung
 up unexpectedly* anche a fronte di credenziali valide per i rami, e gli
 strumenti GitHub possono avere le sole letture su tag e release. In quel caso
 il tag va fatto a mano; è un comando solo.
+
+## I numeri da tarare, e dove stanno
+
+La taratura è il primo punto aperto, e questi sono i numeri che la riguardano.
+Nessuno di loro è stato provato con una persona che si sbraccia davvero davanti
+alla telecamera: sono ragionati, non misurati sul campo.
+
+### Rilevamento del movimento — `src/sensors/PoseDetector.ts`
+
+| costante | ora | cosa fa | sintomo se è sbagliato |
+|---|---:|---|---|
+| `startFactor` | 3,2 | quante volte la quiete per dichiarare l'inizio | troppo alto: non ti vede muovere. Troppo basso: parte da solo |
+| `stillFactor` | 1,8 | sotto quanto si considera fermo | troppo basso: il turno non finisce mai |
+| `minStart` | 0,012 | soglia minima assoluta | protegge dalla quiete misurata a zero, in stanze molto buie |
+| `stillnessMs` | 900 | quanto deve durare l'immobilità | troppo alto: il turno si trascina |
+| `startFrames` | 2 | fotogrammi consecutivi sopra soglia | **non abbassarlo** senza leggere la nota sui fotogrammi duplicati |
+| `sampleHz` | 20 | frequenza di analisi | più alto non aiuta: conta la frequenza della telecamera |
+
+### Reazione sonora — `src/sensors/AudioReactionAnalyzer.ts`
+
+| costante | ora | cosa fa | sintomo |
+|---|---:|---|---|
+| `mediumDb` | 6 | guadagno sul fondo per entrare in MEDIUM | l'indicatore a schermo mostra le tacche: se urlando resti sotto la prima, va abbassato |
+| `highDb` | 14 | guadagno per entrare in HIGH | se la barra sfonda sempre il fondo scala, vanno alzati entrambi |
+| `floorRisePerSecond` | 0,25 | quanto in fretta il fondo insegue verso l'alto | alzarlo riporta il difetto del fondo gonfiato dal giocatore |
+
+### Aura — `src/game/Aura.ts`
+
+| costante | ora | cosa fa |
+|---|---:|---|
+| `AURA_START` | 60 | valore iniziale |
+| `AURA_STEP` | 10 | spostamento massimo per turno. **Deve dividere `AURA_MAX`**: la barra è divisa in tacche da un passo, una per turno |
+| `AGITATION_WEIGHT` | 0,45 | quanto pesa l'agitazione rispetto all'approvazione del pubblico |
+
+Con i valori attuali una partita dura fra i quattro e gli otto turni.
+
+### Tempi del gioco — `src/game/GameStateMachine.ts`, `DEFAULT_CONFIG`
+
+`invitationMs` 900, `playerTurnMs` 12 000, `stillnessFallbackMs` 6 000,
+`beatMs` 600, `samplingMs` 1 500, `nextTurnMs` 900. Sono tutti timer dichiarati
+dalla macchina: `npm run check:game` li fa scattare a comando, quindi cambiarli
+non rompe i controlli.
+
+## Da dove ripartire
+
+Per ciascun punto aperto, la prima mossa concreta:
+
+1. **Taratura.** Giocare una partita vera guardando l'indicatore della voce e la
+   barra del movimento, e annotare dove stanno rispetto alle tacche. Poi toccare
+   i numeri della tabella qui sopra — uno alla volta, perché si influenzano.
+2. **Scambio della texture del viso.** Serve prima il disegno: la caricatura con
+   un'espressione diversa, stesse dimensioni e stessa griglia di
+   `tools/avatar/face-source.png`. Il meccanismo nel renderer è poca cosa:
+   `AvatarRenderer` già sostituisce il materiale del viso, basta poter cambiare
+   la mappa a clip in corso.
+3. **Striscia di pantaloni.** Decisione, non codice: abbassare `HEM_FRACTION` in
+   `AvatarRenderer` — e la striscia si vede sempre — oppure ridurre i
+   sollevamenti `hips` nelle clip, smorzandole.
+4. **Nuove mosse.** Partire da `tools/visual/moves.mjs` per vedere il repertorio
+   affiancato: il criterio è la **sagoma** e l'**altezza**, non l'idea. Ogni
+   clip costa una decina di kB compressa.
+
+## Lavorare con git su questo repository
+
+Lo sviluppo passa da rami `claude/*`, con il deploy agganciato al merge in
+`main`. Due trappole, entrambe già scattate:
+
+- **Prima di ripartire da `main`, controllare che il ramo non porti commit non
+  ancora mergiati.** `git checkout -B <ramo> origin/main` li scarta in silenzio,
+  e un force-push li cancella anche dal remoto. Si recuperano con
+  `git log --oneline origin/main..origin/<ramo>` *prima* di resettare, o con un
+  `cherry-pick` dopo, se ci si accorge in tempo.
+- **La cancellazione di un ramo mergiato, da un agente in container, può essere
+  bloccata** dall'ambiente, come i tag (vedi la nota in «Rilasciare»): va fatta
+  a mano, o dall'interfaccia di GitHub. Prima di cancellare, la verifica che il
+  ramo non porti niente di nuovo è `git diff origin/main origin/<ramo>` vuoto —
+  più solida di `--merged`, che risponde sulla cronologia e non sul contenuto.
 
 ## Decisioni da non rimettere in discussione senza motivo
 
