@@ -1,0 +1,103 @@
+# Crea il tag di una versione, e la release che lo accompagna.
+#
+# Esiste perché il push di un tag richiede credenziali che non tutti gli
+# ambienti di sviluppo hanno: da un agente in container il push dei rami
+# funziona e quello dei tag risponde 403. Qui il token è quello di Actions, con
+# `contents: write`, e il tag lo crea il workflow.
+#
+# Si avvia a mano: scheda Actions → Release → Run workflow. Senza argomenti usa
+# la versione dichiarata in `package.json`, che è la convenzione descritta in
+# `docs/RILASCIO.md`: il numero si alza nel commit che prepara il rilascio, non
+# dopo.
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Tag da creare, es. v1.0.0. Vuoto: la versione in package.json"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+# Un tag alla volta: due esecuzioni in parallelo si contenderebbero lo stesso ref.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      # I tag servono tutti: il controllo «questo tag esiste già» li legge.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      # Un tag deve puntare a un commit che costruisce. La CI lo ha già provato
+      # su questo commit, ma il tag è permanente e la riprova costa un minuto.
+      - run: npm run build
+
+      - name: L'avatar versionato è aggiornato
+        run: |
+          if ! git diff --exit-code -- public/assets; then
+            echo "::error::public/assets non corrisponde a 'npm run build:avatar'. Non taggo una versione con gli asset disallineati."
+            exit 1
+          fi
+
+      - name: Determina il tag e controlla che combaci con package.json
+        id: tag
+        env:
+          REQUESTED: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          PKG="v$(node -p "require('./package.json').version")"
+          TAG="${REQUESTED:-$PKG}"
+          # Accetta sia 1.0.0 che v1.0.0: scritto a mano, il prefisso si scorda.
+          case "$TAG" in v*) ;; *) TAG="v$TAG" ;; esac
+
+          # La discrepanza fra tag e package.json è il difetto che salta fuori
+          # mesi dopo, quando non si capisce più quale versione sia quale.
+          if [ "$TAG" != "$PKG" ]; then
+            echo "::error::Il tag richiesto ($TAG) non corrisponde a package.json ($PKG). Allinea package.json e riprova."
+            exit 1
+          fi
+
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "::error::Il tag $TAG esiste già. Un tag pubblicato non si sposta: alza la versione."
+            exit 1
+          fi
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Taggo $GITHUB_SHA come $TAG"
+
+      # Il repository è firmato da Matteo Baccan: vale anche per l'oggetto tag.
+      - name: Crea e pubblica il tag
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          set -euo pipefail
+          git config user.name "Matteo Baccan"
+          git config user.email "matteo.baccan@gmail.com"
+          git tag -a "$TAG" -m "Six Seven ${TAG#v}"
+          git push origin "$TAG"
+
+      - name: Crea la release
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create "$TAG" \
+            --title "Six Seven ${TAG#v}" \
+            --generate-notes \
+            --verify-tag
