@@ -46,16 +46,25 @@ e verificabile dal commit, non di un artefatto trasportato fra workflow.
 
 ## Versioni
 
-Il progetto non ha ancora numeri di versione (`package.json` è a `0.1.0`).
-Per avere una storia leggibile, al primo rilascio conviene annotare il punto:
+La versione sta in `package.json` e si annota con un tag sul commit di merge.
+**Il tag non innesca il deploy** — che segue `main` e parte dal merge — ma dà
+un riferimento preciso a cui tornare.
 
 ```bash
-git tag -a v0.1.0 -m "Primo prototipo giocabile"
-git push origin v0.1.0
+git fetch origin main
+git tag -a v1.0.0 origin/main -m "Six Seven 1.0.0"
+git push origin v1.0.0
 ```
 
-I tag non innescano il deploy — che segue `main` — ma danno un riferimento
-preciso a cui tornare.
+Il numero va alzato **nello stesso commit** che prepara il rilascio, non dopo:
+un tag che punta a un `package.json` con la versione precedente è una
+discrepanza che salta fuori mesi dopo, quando nessuno ricorda perché.
+
+Cosa significano i numeri qui: la minore sale quando cambia il repertorio o una
+meccanica di gioco, la patch quando si correggono difetti o peso. La maggiore è
+riservata a un cambiamento che rompa il contratto del modello
+(`ASSET-CONTRACT.md`), perché è l'unica cosa che obbliga chi ha sostituito
+l'avatar a rifare il lavoro.
 
 ## Tornare indietro
 

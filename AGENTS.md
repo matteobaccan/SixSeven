@@ -191,6 +191,49 @@ Primo caricamento: circa **800 kB in transito**. Misurato, non stimato — il
 dettaglio è in `docs/RILASCIO.md`. Ogni clip aggiunta al repertorio costa una
 decina di kB compressa: va messo in conto.
 
+## Rilasciare
+
+Il deploy è automatico: **ogni merge in `main` ricostruisce e pubblica** su
+GitHub Pages. Non c'è un comando da dare, e il tag non c'entra — serve solo ad
+avere un riferimento a cui tornare. Il procedimento completo, il ripristino e
+il peso effettivo sono in `docs/RILASCIO.md`.
+
+Da un'altra macchina servono solo Node 22 e un clone. Playwright e il browser
+servono unicamente per gli script di verifica visiva, non per rilasciare.
+
+```bash
+npm ci
+npm run build        # è esattamente ciò che gira in CI
+git tag -a v1.2.0 origin/main -m "Six Seven 1.2.0"
+git push origin v1.2.0
+```
+
+Prima di alzare la versione, quattro cose che fanno fallire la CI o escono
+sbagliate, tutte già successe:
+
+1. **Se hai toccato i sorgenti dell'avatar, rigenera e committa gli asset nello
+   stesso commit.** `npm run build` li riscrive; se il file versionato non
+   corrisponde, la CI lo dice e si ferma. Vale anche al contrario: non lasciare
+   che uno strumento esterno li ottimizzi (vedi `.imgbotconfig`).
+2. **Alza `package.json` nello stesso commit che prepara il rilascio**, non
+   dopo: un tag che punta a una versione precedente è una discrepanza che salta
+   fuori mesi dopo.
+3. **Aggiorna i numeri del peso** in `STATO.md` e `RILASCIO.md` se il
+   repertorio è cambiato: ogni clip costa una decina di kB compressa, e quei
+   numeri sono invecchiati tre volte.
+4. **Controlla la tabella dei criteri di accettazione** in `STATO.md`: è
+   l'unico posto in cui si dichiara cosa è stato provato davvero e su cosa.
+
+Il deploy può restare in coda diversi minuti in attesa di un runner: è normale,
+è successo con attese fra i due e i nove minuti, e non è un problema del
+workflow. Il lavoro vero dura una quarantina di secondi.
+
+Una nota per chi rilascia da un agente in un container: la creazione dei tag
+può essere bloccata dall'ambiente — il push fallisce con *the remote end hung
+up unexpectedly* anche a fronte di credenziali valide per i rami, e gli
+strumenti GitHub possono avere le sole letture su tag e release. In quel caso
+il tag va fatto a mano; è un comando solo.
+
 ## Decisioni da non rimettere in discussione senza motivo
 
 Sono in `docs/STATO.md` con le ragioni per esteso. In sintesi: modello generato
