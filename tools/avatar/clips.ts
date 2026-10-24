@@ -8,6 +8,7 @@
  */
 import type * as THREE from 'three';
 import {
+  blessing,
   classicWeighing,
   extremeSixSeven,
   fingerSixSeven,
@@ -21,9 +22,12 @@ import {
   whatDoYouWantMove,
 } from './clips-moves.ts';
 import {
+  applause,
   celebration,
+  armsCrossed,
   disappointed,
   idle,
+  notBad,
   sixSevenFace,
   taunt,
   turnTransition,
@@ -43,10 +47,14 @@ export function buildClips(): THREE.AnimationClip[] {
     sixSevenKid(),
     whatDoYouWantMove(),
     mindBlownMove(),
+    blessing(),
     sixSevenFace(),
     taunt(),
     celebration(),
     disappointed(),
     turnTransition(),
+    applause(),
+    notBad(),
+    armsCrossed(),
   ];
 }

@@ -714,3 +714,65 @@ export const mindBlownMove = (): THREE.AnimationClip =>
     { t: 2.55, pose: sym({ UpperArm_L: [-8, -16, 8], LowerArm_L: [-38, 28, 3], Jaw: [4, 0, 0] }), ease: 'in' },
     { t: 2.95, pose: {} },
   ]);
+
+// ---------------------------------------------------------------------------
+// S7-09 Benedizione — la solennità che crolla nella bilancia
+// ---------------------------------------------------------------------------
+
+/**
+ * Mano alzata nel gesto della benedizione, indice e medio tesi.
+ *
+ * Nasce da un momento documentato del fenomeno: nel maggio 2026 Papa Leone XIV
+ * ha fatto il gesto del 6-7 incontrando dei giovani pellegrini in Vaticano. La
+ * battuta sta tutta nel **contrasto fra le due posture**, non nella seconda: la
+ * mano sale composta e ferma, resta, e poi collassa nella bilancia senza che la
+ * faccia cambi espressione. Per questo la tenuta dura quasi un secondo — una
+ * solennità di mezzo secondo non è solennità, è un'esitazione.
+ */
+const BLESSING: Pose = {
+  ...oneSide(TWO, 'L'),
+  ...oneSide(FIST, 'R'),
+  Hips: [0, 0, 0],
+  Spine: [-2, 0, 0],
+  Chest: [-4, 0, 0],
+  Neck: [2, 0, 0],
+  // Mento appena abbassato e sguardo basso: composto, non trionfante.
+  Head: [3, -3, 0],
+  Jaw: [0, 0, 0],
+  Brow_L: [-4, 0, 0],
+  Brow_R: [-4, 0, 0],
+  Eye_L: [4, -2, 0],
+  Eye_R: [4, -2, 0],
+
+  // Mano all'altezza della testa, palmo in avanti, braccio fermo.
+  Shoulder_L: [0, -4, 20],
+  UpperArm_L: [-50, -14, 8],
+  LowerArm_L: [-102, 48, 2],
+  Hand_L: [-6, -8, 2],
+
+  // L'altro braccio resta basso e immobile: è metà della compostezza.
+  Shoulder_R: [0, 2, 0],
+  UpperArm_R: [-4, 8, 4],
+  LowerArm_R: [-16, -10, -2],
+  Hand_R: [-2, 4, -2],
+};
+
+export const blessing = (): THREE.AnimationClip =>
+  compileClip('Blessing', [
+    { t: 0, pose: {} },
+    // Nessun anticipo marcato: la mano sale piana, senza slancio.
+    { t: 0.45, pose: BLESSING, ease: 'out' },
+    // Tenuta lunga. È il tempo a costruire il contrasto con quel che segue.
+    { t: 1.0, pose: BLESSING },
+    { t: 1.5, pose: { ...BLESSING, Head: [4, -4, 1] } },
+    // Crollo: le mani cadono nella bilancia. La faccia non cambia, ed è lì la
+    // battuta — se cambiasse, la mossa spiegherebbe sé stessa.
+    { t: 1.78, pose: { ...weigh(0), Brow_L: [-4, 0, 0], Brow_R: [-4, 0, 0], Jaw: [0, 0, 0] }, ease: 'out' },
+    weighKey(2.08, 24),
+    weighKey(2.38, -24),
+    weighKey(2.68, 20),
+    { ...weighKey(2.98, 0), ease: 'out' },
+    { t: 3.3, pose: weigh(0) },
+    { t: 3.64, pose: sym({ UpperArm_L: [2, -16, -5], LowerArm_L: [-34, 24, 3] }), ease: 'in' },
+    { t: 4.0, pose: {} },
+  ]);

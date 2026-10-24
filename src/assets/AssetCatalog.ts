@@ -101,11 +101,15 @@ const ENTRIES: readonly CatalogEntry[] = [
     loop: false,
     timeScale: 1,
   },
-  // S7-09 è volutamente libero: è riservato alla benedizione che collassa nella
-  // bilancia, ricavata da un momento documentato del fenomeno — Papa Leone XIV
-  // che fa il gesto con dei pellegrini, maggio 2026. Costruibile con le sole
-  // pose, non realizzata: è una gestualità religiosa sul volto di una persona
-  // reale, e la decisione non è tecnica.
+  {
+    id: 'S7-09',
+    name: 'Benedizione',
+    kind: 'move',
+    clip: 'Blessing',
+    description: 'La mano alzata e solenne che crolla nella bilancia.',
+    loop: false,
+    timeScale: 1,
+  },
   {
     id: 'S7-10',
     name: 'Il 67 Kid',
@@ -186,6 +190,33 @@ const ENTRIES: readonly CatalogEntry[] = [
     kind: 'reaction',
     clip: 'TurnTransition',
     description: 'Passaggio tra il turno dell’avatar e quello del giocatore.',
+    loop: false,
+    timeScale: 1,
+  },
+  {
+    id: 'RX-07',
+    name: 'Applauso',
+    kind: 'reaction',
+    clip: 'Applause',
+    description: 'Batte le mani: alternativa alla festa quando il pubblico c’è.',
+    loop: false,
+    timeScale: 1,
+  },
+  {
+    id: 'RX-08',
+    name: 'Non male',
+    kind: 'reaction',
+    clip: 'NotBad',
+    description: 'Cenno del capo e mani larghe: concede un punto senza entusiasmo.',
+    loop: false,
+    timeScale: 1,
+  },
+  {
+    id: 'RX-09',
+    name: 'Braccia conserte',
+    kind: 'reaction',
+    clip: 'ArmsCrossed',
+    description: 'Braccia incrociate e sguardo di lato: non impressionato.',
     loop: false,
     timeScale: 1,
   },

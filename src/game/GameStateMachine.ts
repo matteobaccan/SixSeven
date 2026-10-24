@@ -143,12 +143,20 @@ export interface GameOptions {
   aura?: AuraMeter;
 }
 
-/** Reazioni preferite per livello sonoro; la scelta resta non vincolante. */
+/**
+ * Reazioni preferite per livello sonoro; la scelta resta non vincolante.
+ *
+ * Ogni fascia ne elenca più d'una perché `pickReaction` scarta quella appena
+ * usata: con una sola preferenza per fascia ricadeva sempre sulla seconda
+ * scelta, e le reazioni si vedono una per turno — quattro-otto a partita —
+ * mentre una mossa torna solo a mazzo esaurito. È da lì che veniva il senso di
+ * ripetizione, non dalle mosse.
+ */
 const REACTION_BY_LEVEL: Record<ReactionLevel, readonly string[]> = {
-  high: ['RX-03', 'RX-01'],
-  medium: ['RX-01', 'RX-02'],
-  low: ['RX-04', 'RX-02'],
-  unknown: ['RX-02', 'RX-01'],
+  high: ['RX-03', 'RX-07', 'RX-01'],
+  medium: ['RX-08', 'RX-01', 'RX-02'],
+  low: ['RX-04', 'RX-09', 'RX-02'],
+  unknown: ['RX-02', 'RX-08', 'RX-01'],
 };
 
 export class GameStateMachine {
