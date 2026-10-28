@@ -23,6 +23,63 @@ perché quasi tutte nascono da un tentativo fallito che è ancora in cronologia.
 
 ---
 
+## Ripresa a freddo
+
+Il progetto è **in pausa alla 1.0.0**: tag `v1.0.0` sul commit `c265c83`,
+release pubblicata, sito in linea. Niente in sospeso — nessuna pull request
+aperta, nessun ramo di lavoro, nessuna modifica che viva solo in una sessione
+di chat. Tutto quello che serve per ripartire è qui dentro: se una cosa non si
+capisce dal repository, è un difetto di questi documenti, non qualcosa da
+ricordare a memoria.
+
+I primi dieci minuti, su una macchina qualunque con Node 22:
+
+```bash
+git clone https://github.com/matteobaccan/SixSeven.git
+cd SixSeven
+npm ci
+npm run build     # finisce con «Tutti i controlli superati»
+npm run dev       # http://localhost:5173
+```
+
+Si deve vedere l'avatar inquadrato dalla testa all'orlo del maglione, che fa una
+mossa, invita, e aspetta il turno del giocatore. Telecamera e microfono chiedono
+il permesso: su `localhost` il browser lo concede, altrove serve HTTPS — è un
+vincolo del browser, non una scelta, e il perché sta in `docs/RILASCIO.md`.
+
+Poi, in quest'ordine: **«I vincoli duri»** qui sotto, per sapere cosa non si può
+fare prima di provarci; le **undici decisioni** di `docs/STATO.md`, per sapere
+perché; i **punti aperti** dello stesso documento, per sapere dove si era
+arrivati.
+
+### Le cose che si rompono col tempo, non col codice
+
+Un progetto fermo non resta verde da solo. Tre segnali che sembrano una
+regressione e non lo sono:
+
+- **`npm audit --audit-level=moderate`, in CI, guarda il mondo e non il
+  repository.** Una vulnerabilità pubblicata dopo l'ultimo commit rende rossa
+  una CI che nessuno ha toccato. È già capitato con `vite` e `tsx`, alla prima
+  pull request. Non è un difetto del gioco: è un aggiornamento di dipendenze da
+  fare, con la build riprovata dopo.
+- **Le action sono inchiodate alla versione maggiore** (`@v7`, `@v6`, `@v5`).
+  Invecchiano con avvisi di deprecazione prima di rompersi: se un workflow
+  fallisce nel passo di `checkout` o di `setup-node`, è lì che si guarda, non
+  nel codice.
+- **Il controllo sull'avatar versionato confronta un binario con la sua
+  ricostruzione.** È deterministico a dipendenze ferme; se diventa rosso senza
+  che nessuno abbia toccato `tools/avatar/`, il sospetto è un aggiornamento di
+  `meshoptimizer` o di `pngjs`. Si risolve rigenerando e committando
+  (`npm run build:avatar`), non aggirando il controllo: quel confronto è l'unica
+  cosa che tiene allineati i sorgenti dell'avatar e il binario che viene
+  servito.
+
+Per gli script che aprono un browser vero serve Playwright, che di proposito non
+è una dipendenza del progetto: come si installa, e la trappola di
+`npm install --no-save` che lo pota, stanno in `tools/visual/README.md`.
+
+---
+
 ## Cos'è
 
 Un gioco web mobile-first: un avatar 3D caricaturale esegue una mossa ispirata al
