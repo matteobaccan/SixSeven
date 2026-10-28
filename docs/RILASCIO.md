@@ -51,7 +51,7 @@ La versione sta in `package.json` e si annota con un tag sul commit di merge.
 un riferimento preciso a cui tornare.
 
 Il tag lo crea il workflow **Release**: scheda Actions → Release → *Run
-workflow*, senza argomenti. Prende la versione da `package.json`, rifà la build
+workflow*, senza argomenti. È come è stata fatta la `v1.0.0`. Prende la versione da `package.json`, rifà la build
 sul commit che sta per taggare, crea il tag annotato e apre la release con le
 note generate.
 

@@ -3,6 +3,10 @@
 Riferimento: `SPEC.md`. Questo documento dice cosa è realizzato, quali decisioni
 sono state prese e cosa resta aperto.
 
+**Il progetto si ferma alla 1.0.0** — tag `v1.0.0`, release pubblicata, sito in
+linea — e riprende quando riprende. Per ripartire da zero su un'altra macchina,
+«Ripresa a freddo» in `AGENTS.md`.
+
 ## Criteri di accettazione del prototipo (spec 11)
 
 | Criterio | Stato |
